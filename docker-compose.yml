@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongo:27017/idrip
+    depends_on:
+      - mongo
+
+  ai-service:
+    build:
+      context: ./ai-service
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ai-service:/app
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
