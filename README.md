@@ -1,4 +1,4 @@
-# 💧 iDrip - AI Personal Stylist & Virtual Wardrobe
+# 💦 iDrip - AI Personal Stylist & Virtual Wardrobe
 
 > Proiect realizat pentru cursul de Medii de Dezvoltare Software.
 
