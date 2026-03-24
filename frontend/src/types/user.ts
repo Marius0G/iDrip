@@ -1,0 +1,18 @@
+import type { BudgetSettings, StylePreference } from "./shopping";
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl?: string;
+  stylePreferences: StylePreference[];
+  budget: BudgetSettings;
+  theme: "light" | "dark" | "system";
+  createdAt: string;
+}
+
+export interface UserSettings {
+  stylePreferences: StylePreference[];
+  budget: BudgetSettings;
+  theme: "light" | "dark" | "system";
+}
