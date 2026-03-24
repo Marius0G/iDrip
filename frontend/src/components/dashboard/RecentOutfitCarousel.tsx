@@ -22,7 +22,7 @@ export function RecentOutfitCarousel({ outfits }: RecentOutfitCarouselProps) {
       <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
         {outfits.slice(0, 5).map((outfit) => (
           <div key={outfit.id} className="flex-shrink-0 w-56">
-            <div className="bg-white/70 dark:bg-black/70 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+            <div className="bg-white/70 dark:bg-white/[0.06] backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] rounded-2xl shadow-lg dark:shadow-black/20 overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:border-black/10 dark:hover:border-white/15 dark:hover:bg-white/[0.09] cursor-pointer"
               onClick={() => navigate("/generator")}>
               <div className="flex -space-x-3 p-3 pb-0">
                 {outfit.items.slice(0, 3).map((item, i) => (

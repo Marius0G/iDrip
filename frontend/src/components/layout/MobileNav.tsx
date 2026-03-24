@@ -13,7 +13,7 @@ const navItems = [
 
 export function MobileNav() {
   return (
-    <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-50 glass-nav safe-area-bottom">
+    <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/80 dark:bg-[#141418]/90 backdrop-blur-xl border-t border-black/[0.06] dark:border-white/[0.08] safe-area-bottom">
       <div className="flex items-center justify-around w-full px-2 py-2">
         {navItems.map((item) => (
           <NavLink

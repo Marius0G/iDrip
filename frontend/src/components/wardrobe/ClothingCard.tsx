@@ -9,7 +9,7 @@ interface ClothingCardProps {
 export function ClothingCard({ item, onClick }: ClothingCardProps) {
   return (
     <button onClick={onClick} className="group text-left w-full">
-      <div className="relative rounded-2xl overflow-hidden bg-white/70 dark:bg-black/70 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
+      <div className="relative rounded-2xl overflow-hidden bg-white/70 dark:bg-white/[0.06] backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] shadow-lg dark:shadow-black/20 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:border-black/10 dark:hover:border-white/15 dark:hover:bg-white/[0.09]">
         <div className="aspect-[3/4] overflow-hidden">
           <img
             src={item.imageUrl}

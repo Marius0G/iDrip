@@ -8,7 +8,7 @@ interface RecommendationCardProps {
 
 export function RecommendationCard({ recommendation, onDismiss }: RecommendationCardProps) {
   return (
-    <div className="bg-white/70 dark:bg-black/70 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-lg overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.01]">
+    <div className="bg-white/70 dark:bg-white/[0.06] backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] rounded-2xl shadow-lg dark:shadow-black/20 overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.01] hover:border-black/10 dark:hover:border-white/15 dark:hover:bg-white/[0.09]">
       <div className="relative aspect-[4/5] overflow-hidden">
         <img src={recommendation.imageUrl} alt={recommendation.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
         <button onClick={() => onDismiss(recommendation.id)} className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60">

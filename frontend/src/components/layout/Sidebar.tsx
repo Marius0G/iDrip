@@ -12,12 +12,11 @@ const navItems = [
 
 export function Sidebar() {
   return (
-    <aside className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 bg-white/60 dark:bg-black/60 backdrop-blur-2xl border-r border-white/20 dark:border-white/10 z-40">
+    <aside className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 bg-white/60 dark:bg-white/[0.03] backdrop-blur-2xl border-r border-black/[0.06] dark:border-white/[0.08] z-40">
       {/* Logo */}
       <div className="p-6 pb-2">
         <h1 className="text-2xl font-bold tracking-tight">
-          <span className="text-black dark:text-white">i</span>
-          <span className="text-gray-400">Drip</span>
+          <span className="text-black dark:text-white">iDrip</span>
         </h1>
         <p className="text-xs text-muted-foreground mt-1">AI Personal Stylist</p>
       </div>
@@ -33,8 +32,8 @@ export function Sidebar() {
               cn(
                 "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "bg-black text-white dark:bg-white dark:text-black shadow-md"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5"
+                  ? "bg-black text-white dark:bg-white/[0.12] dark:text-white shadow-md dark:shadow-black/30"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/[0.06] hover:text-black dark:hover:text-gray-200"
               )
             }
           >

@@ -23,9 +23,9 @@ src/
       GlassCard.tsx        # CVA component: size (sm/default/lg) + hover variants
       GlassPanel.tsx       # Simple backdrop-blur-2xl glass wrapper
     layout/
-      Sidebar.tsx          # Desktop nav (md:flex, w-64)
-      Header.tsx           # Top bar
-      MobileNav.tsx        # Bottom nav bar
+      Sidebar.tsx          # Desktop nav (hidden md:flex, w-64, fixed left); 4 nav items + Profile at bottom; routes from ROUTES in @/lib/constants
+      Header.tsx           # Mobile-only (md:hidden), sticky top; iDrip logo + avatar placeholder; inline glass style
+      MobileNav.tsx        # Mobile-only (flex md:hidden), fixed bottom; 5 nav items: Home, Wardrobe, AI, Shop, Profile; inline glass style
       PageContainer.tsx    # Page content wrapper
     dashboard/
       StatCard.tsx              # Glass stat tile: icon + label + value + optional subtitle + optional className
@@ -62,7 +62,9 @@ src/
     shopping.ts     # ShoppingRecommendation, BudgetSettings, StylePreference
     user.ts         # User, UserSettings
     common.ts       # ApiResponse<T>
-  lib/              # Utility helpers (cn, etc.)
+  lib/
+    constants.ts    # ROUTES constant — path strings for all routes
+    utils.ts        # cn() and other utility helpers
   assets/           # Static assets
 ```
 <!-- END AUTO-MANAGED -->
@@ -80,8 +82,8 @@ src/
 <!-- AUTO-MANAGED: patterns -->
 ## Component Patterns
 
-- **Glass card style**: `bg-white/70 dark:bg-black/70 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-lg` — used inline on ClothingCard, OutfitCard, StatCard, RecentOutfitCarousel cards (prefer inline class string over `glass-card` utility for dark mode support)
-- **Glass nav style**: `glass-nav` CSS utility class (`@utility` in `index.css`) — used on Header and MobileNav
+- **Glass card style**: `bg-white/70 dark:bg-white/[0.06] backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] shadow-lg dark:shadow-black/20 transition-all duration-300` — used inline on ClothingCard, OutfitCard, StatCard, RecentOutfitCarousel cards, BudgetSlider, QuickActions (prefer inline class string over `glass-card` utility for dark mode support)
+- **Glass nav style**: Header and MobileNav use inline class string `bg-white/80 dark:bg-[#141418]/90 backdrop-blur-xl border-black/[0.06] dark:border-white/[0.08]` — the `glass-nav` CSS utility (`@utility` in `index.css`) exists but is not currently used by any component
 - **Active pill style**: `bg-black text-white dark:bg-white dark:text-black` — used in CategoryFilter, season selectors, occasion selectors
 - **Overlay pattern**: `fixed inset-0 z-50` with `bg-black/40 backdrop-blur-sm` backdrop — used by ClothingUploadDialog and ClothingDetailSheet
   - Dialog: slides from bottom on mobile (`items-end`), centered on md+ (`md:items-center`); max-w-lg, rounded-t-3xl md:rounded-3xl
@@ -128,7 +130,7 @@ src/
 - Color tokens (HSL vars): `--background`, `--foreground`, `--primary`, `--secondary`, `--muted`, `--accent`, `--destructive`, `--border`, `--input`, `--ring`
 - Border radius token: `--radius` (default `0.75rem`); derived tokens `--radius-sm` through `--radius-3xl` via `calc()`
 - Font token: `--font-sans: 'Inter', ui-sans-serif, ...`
-- Glass `@utility` classes in `index.css`: `glass`, `glass-card`, `glass-card-lg`, `glass-nav` — use `glass-nav` for Header/MobileNav; inline class strings used for card glass style
+- Glass `@utility` classes in `index.css`: `glass`, `glass-card`, `glass-card-lg`, `glass-nav` — defined using `oklch(from white l c h / ...)` syntax; inline class strings are used in practice for all card and nav components (none currently reference these utilities directly)
 
 ### Type Reference
 - `ClothingCategory`: tops | bottoms | outerwear | dresses | shoes | accessories

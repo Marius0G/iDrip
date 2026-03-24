@@ -12,7 +12,7 @@ export function BudgetSlider({ budget, spent, onChange }: BudgetSliderProps) {
   const percentage = (spent / budget) * 100;
 
   return (
-    <div className="bg-white/70 dark:bg-black/70 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-lg">
+    <div className="bg-white/70 dark:bg-white/[0.06] backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] rounded-2xl p-5 shadow-lg dark:shadow-black/20 transition-all duration-300">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <DollarSign className="w-5 h-5 text-muted-foreground" />

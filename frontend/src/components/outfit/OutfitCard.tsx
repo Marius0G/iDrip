@@ -8,7 +8,7 @@ interface OutfitCardProps {
 
 export function OutfitCard({ outfit, onDelete }: OutfitCardProps) {
   return (
-    <div className="bg-white/70 dark:bg-black/70 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-lg overflow-hidden">
+    <div className="bg-white/70 dark:bg-white/[0.06] backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] rounded-2xl shadow-lg dark:shadow-black/20 overflow-hidden transition-all duration-300 hover:border-black/10 dark:hover:border-white/15 dark:hover:bg-white/[0.09]">
       <div className="flex -space-x-2 p-4 pb-0">
         {outfit.items.slice(0, 4).map((item, i) => (
           <div key={item.clothingItemId} className="w-20 h-24 rounded-xl overflow-hidden border-2 border-white dark:border-gray-900 shadow-sm flex-shrink-0" style={{ zIndex: 4 - i }}>
@@ -30,7 +30,7 @@ export function OutfitCard({ outfit, onDelete }: OutfitCardProps) {
             </div>
           </div>
           {onDelete && (
-            <button onClick={() => onDelete(outfit.id)} className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-muted-foreground hover:text-red-500 transition-colors">
+            <button onClick={() => onDelete(outfit.id)} className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/[0.08] text-muted-foreground hover:text-red-500 dark:hover:text-red-400 transition-colors">
               <Trash2 className="w-4 h-4" />
             </button>
           )}

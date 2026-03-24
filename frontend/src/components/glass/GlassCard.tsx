@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
 const glassCardVariants = cva(
-  "bg-white/70 dark:bg-black/70 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-lg transition-all duration-300",
+  "bg-white/70 dark:bg-white/[0.06] backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] shadow-lg dark:shadow-black/20 transition-all duration-300",
   {
     variants: {
       size: {
@@ -11,7 +11,7 @@ const glassCardVariants = cva(
         sm: "rounded-xl p-4",
       },
       hover: {
-        true: "hover:shadow-xl hover:scale-[1.02] cursor-pointer",
+        true: "hover:shadow-xl hover:scale-[1.02] hover:border-black/10 dark:hover:border-white/15 dark:hover:bg-white/[0.09] cursor-pointer",
         false: "",
       },
     },
