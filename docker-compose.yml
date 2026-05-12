@@ -31,6 +31,8 @@ services:
       context: ./ai-service
     ports:
       - "8000:8000"
+    environment:
+      - PORT=8000
     volumes:
       - ./ai-service:/app
 

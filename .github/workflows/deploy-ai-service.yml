@@ -1,0 +1,43 @@
+name: Deploy ai-service to Hugging Face Spaces
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "ai-service/**"
+      - ".github/workflows/deploy-ai-service.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Push ai-service to HF Space
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Push subtree to HF Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: ${{ secrets.HF_USERNAME }}
+          HF_SPACE: ${{ secrets.HF_SPACE }}
+        run: |
+          set -e
+          git config --global user.email "ci@idrip.tech"
+          git config --global user.name "iDrip CI"
+
+          # Create a clean working copy of just ai-service/
+          WORK=$(mktemp -d)
+          cp -R ai-service/. "$WORK/"
+          cd "$WORK"
+
+          git init -b main
+          git add .
+          git commit -m "Deploy from ${GITHUB_SHA}"
+
+          git remote add space "https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/${HF_SPACE}"
+          git push --force space main
