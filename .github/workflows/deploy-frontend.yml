@@ -44,11 +44,12 @@ jobs:
         run: npm run build
 
       - name: Ensure Cloudflare Pages project exists
+        continue-on-error: true
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages project create idrip --production-branch=main || true
+          command: pages project create idrip --production-branch=main
           workingDirectory: frontend
 
       - name: Publish to Cloudflare Pages
