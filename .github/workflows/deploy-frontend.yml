@@ -43,10 +43,18 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Ensure Cloudflare Pages project exists
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages project create idrip --production-branch=main || true
+          workingDirectory: frontend
+
       - name: Publish to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=idrip --branch=${{ github.head_ref || github.ref_name }}
+          command: pages deploy dist --project-name=idrip --branch=${{ github.head_ref || github.ref_name }} --commit-dirty=true
           workingDirectory: frontend
