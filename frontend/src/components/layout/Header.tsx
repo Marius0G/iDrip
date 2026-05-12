@@ -1,5 +1,3 @@
-import { cn } from "@/lib/utils";
-
 export function Header() {
   return (
     <header className="md:hidden sticky top-0 z-40 bg-white/80 dark:bg-[#141418]/90 backdrop-blur-xl border-b border-black/[0.06] dark:border-white/[0.08] px-4 py-3">

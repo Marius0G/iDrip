@@ -2,7 +2,7 @@
 title: iDrip AI Service
 emoji: 👗
 colorFrom: gray
-colorTo: black
+colorTo: gray
 sdk: docker
 app_port: 7860
 pinned: false

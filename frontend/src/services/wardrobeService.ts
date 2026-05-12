@@ -15,7 +15,7 @@ export const wardrobeService = {
     await delay();
     return { id, ...updates } as ClothingItem;
   },
-  async delete(id: string): Promise<void> {
+  async delete(_id: string): Promise<void> {
     await delay();
   },
 };
