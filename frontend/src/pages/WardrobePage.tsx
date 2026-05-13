@@ -34,7 +34,7 @@ export default function WardrobePage() {
           <h2 className="text-2xl font-bold">My Wardrobe</h2>
           <p className="text-sm text-muted-foreground mt-1">{items.length} items</p>
         </div>
-        <button onClick={() => setShowUpload(true)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black text-white dark:bg-white dark:text-black text-sm font-medium hover:opacity-90 transition-opacity">
+        <button onClick={() => setShowUpload(true)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[hsl(var(--glacier))] text-white text-sm font-medium hover:opacity-90 transition-opacity">
           <Plus className="w-4 h-4" /> Add Item
         </button>
       </div>

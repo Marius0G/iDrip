@@ -8,10 +8,10 @@ interface OutfitCardProps {
 
 export function OutfitCard({ outfit, onDelete }: OutfitCardProps) {
   return (
-    <div className="bg-white/70 dark:bg-white/[0.06] backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] rounded-2xl shadow-lg dark:shadow-black/20 overflow-hidden transition-all duration-300 hover:border-black/10 dark:hover:border-white/15 dark:hover:bg-white/[0.09]">
+    <div className="bg-[hsl(var(--frost)/0.7)] backdrop-blur-xl border border-[hsl(var(--border)/0.4)] rounded-2xl shadow-[0_4px_24px_-2px_hsl(210_80%_60%/0.12)] overflow-hidden transition-all duration-300 hover:shadow-[0_8px_32px_-4px_hsl(210_90%_40%/0.15)]">
       <div className="flex -space-x-2 p-4 pb-0">
         {outfit.items.slice(0, 4).map((item, i) => (
-          <div key={item.clothingItemId} className="w-20 h-24 rounded-xl overflow-hidden border-2 border-white dark:border-gray-900 shadow-sm flex-shrink-0" style={{ zIndex: 4 - i }}>
+          <div key={item.clothingItemId} className="w-20 h-24 rounded-xl overflow-hidden border-2 border-[hsl(var(--frost))] shadow-sm flex-shrink-0" style={{ zIndex: 4 - i }}>
             <img src={item.clothingItem.imageUrl} alt={item.clothingItem.name} className="w-full h-full object-cover" />
           </div>
         ))}
@@ -30,7 +30,7 @@ export function OutfitCard({ outfit, onDelete }: OutfitCardProps) {
             </div>
           </div>
           {onDelete && (
-            <button onClick={() => onDelete(outfit.id)} className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/[0.08] text-muted-foreground hover:text-red-500 dark:hover:text-red-400 transition-colors">
+            <button onClick={() => onDelete(outfit.id)} className="p-2 rounded-lg hover:bg-[hsl(var(--frost))] text-muted-foreground hover:text-[hsl(var(--punctuation))] transition-colors">
               <Trash2 className="w-4 h-4" />
             </button>
           )}

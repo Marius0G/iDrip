@@ -2,38 +2,64 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { User } from "@/types/user";
 import type { StylePreference } from "@/types/shopping";
-import { mockUser } from "@/data/mockUser";
 
 interface UserState {
-  user: User;
-  loadUser: () => void;
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  setAuth: (token: string, user: User) => void;
+  logout: () => void;
   updateStylePreferences: (styles: StylePreference[]) => void;
   updateBudget: (monthlyBudget: number) => void;
   setTheme: (theme: "light" | "dark" | "system") => void;
   clearAllData: () => void;
 }
 
+const emptyUser: User = {
+  id: "",
+  name: "",
+  email: "",
+  stylePreferences: [],
+  budget: { monthlyBudget: 150, spent: 0, currency: "USD" },
+  theme: "system",
+  createdAt: "",
+};
+
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
-      user: mockUser,
+      user: null,
+      token: null,
+      isAuthenticated: false,
 
-      loadUser: () => {
-        // User is loaded from persisted state or defaults to mockUser
+      setAuth: (token, user) => {
+        localStorage.setItem("idrip-token", token);
+        set({ token, user, isAuthenticated: true });
+      },
+
+      logout: () => {
+        localStorage.removeItem("idrip-token");
+        set({ token: null, user: null, isAuthenticated: false });
       },
 
       updateStylePreferences: (styles) => {
-        set((state) => ({ user: { ...state.user, stylePreferences: styles } }));
+        set((state) => ({
+          user: state.user ? { ...state.user, stylePreferences: styles } : null,
+        }));
       },
 
       updateBudget: (monthlyBudget) => {
         set((state) => ({
-          user: { ...state.user, budget: { ...state.user.budget, monthlyBudget } },
+          user: state.user
+            ? { ...state.user, budget: { ...state.user.budget, monthlyBudget } }
+            : null,
         }));
       },
 
       setTheme: (theme) => {
-        set((state) => ({ user: { ...state.user, theme } }));
+        set((state) => ({
+          user: state.user ? { ...state.user, theme } : null,
+        }));
         if (theme === "dark") document.documentElement.classList.add("dark");
         else if (theme === "light") document.documentElement.classList.remove("dark");
         else {
@@ -47,7 +73,8 @@ export const useUserStore = create<UserState>()(
         localStorage.removeItem("idrip-outfits");
         localStorage.removeItem("idrip-shopping");
         localStorage.removeItem("idrip-user");
-        set({ user: mockUser });
+        localStorage.removeItem("idrip-token");
+        set({ user: emptyUser, token: null, isAuthenticated: false });
         window.location.reload();
       },
     }),

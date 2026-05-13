@@ -15,8 +15,8 @@ export function GenerateButton({ onClick, isGenerating, disabled }: GenerateButt
       className={cn(
         "w-full py-4 rounded-2xl text-sm font-semibold flex items-center justify-center gap-3 transition-all duration-300",
         isGenerating
-          ? "bg-black/80 dark:bg-white/80 text-white dark:text-black"
-          : "bg-black text-white dark:bg-white dark:text-black hover:opacity-90 hover:shadow-xl hover:scale-[1.01]",
+          ? "bg-[hsl(var(--glacier)/0.8)] text-white"
+          : "bg-[hsl(var(--glacier))] text-white hover:opacity-90 hover:shadow-xl hover:scale-[1.01]",
         "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
       )}
     >

@@ -18,8 +18,8 @@ export function StyleTagSelector({ selected, onToggle, className }: StyleTagSele
           className={cn(
             "px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border",
             selected.includes(style.value as StylePreference)
-              ? "bg-black text-white dark:bg-white dark:text-black border-transparent shadow-md"
-              : "bg-white/50 dark:bg-white/5 text-muted-foreground border-white/20 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10"
+              ? "bg-[hsl(var(--glacier))] text-white border-transparent shadow-md"
+              : "bg-[hsl(var(--frost)/0.5)] text-muted-foreground border-[hsl(var(--border)/0.4)] hover:bg-[hsl(var(--frost))]"
           )}
         >
           {style.label}

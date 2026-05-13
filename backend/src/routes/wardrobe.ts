@@ -1,16 +1,11 @@
 import { Router, Request, Response } from 'express';
 import WardrobeItem from '../models/WardrobeItem';
-import User from '../models/User';
+import { checkWardrobeLimit } from '../middleware/featureGate';
 
 const router = Router();
 
-async function getDemoUserId(): Promise<string> {
-  const user = await User.findOne({ email: 'alex@idrip.demo' });
-  return user!._id.toString();
-}
-
 router.get('/', async (req: Request, res: Response) => {
-  const userId = await getDemoUserId();
+  const userId = req.userId;
   const { category, season } = req.query;
 
   const filter: Record<string, unknown> = { userId };
@@ -27,8 +22,8 @@ router.get('/:id', async (req: Request, res: Response) => {
   res.json(item);
 });
 
-router.post('/', async (req: Request, res: Response) => {
-  const userId = await getDemoUserId();
+router.post('/', checkWardrobeLimit, async (req: Request, res: Response) => {
+  const userId = req.userId;
   const item = await WardrobeItem.create({ ...req.body, userId });
   res.status(201).json(item);
 });

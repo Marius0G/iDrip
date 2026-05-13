@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useUserStore } from "@/stores/useUserStore";
 
 export function useTheme() {
-  const theme = useUserStore((s) => s.user.theme);
+  const theme = useUserStore((s) => s.user?.theme ?? "system");
   const setTheme = useUserStore((s) => s.setTheme);
 
   useEffect(() => {

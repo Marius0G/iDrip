@@ -4,6 +4,8 @@ export const ROUTES = {
   GENERATOR: "/generator",
   SHOPPING: "/shopping",
   PROFILE: "/profile",
+  SUBSCRIPTION: "/subscription",
+  LOGIN: "/login",
 } as const;
 
 export const NAV_ITEMS = [

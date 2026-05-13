@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["npx", "ts-node", "src/index.ts"]
+CMD ["npx", "ts-node", "--files", "src/index.ts"]

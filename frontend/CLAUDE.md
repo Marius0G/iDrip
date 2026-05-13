@@ -82,12 +82,13 @@ src/
 <!-- AUTO-MANAGED: patterns -->
 ## Component Patterns
 
-- **Glass card style**: `bg-white/70 dark:bg-white/[0.06] backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] shadow-lg dark:shadow-black/20 transition-all duration-300` — used inline on ClothingCard, OutfitCard, StatCard, RecentOutfitCarousel cards, BudgetSlider, QuickActions (prefer inline class string over `glass-card` utility for dark mode support)
-- **Glass nav style**: Header and MobileNav use inline class string `bg-white/80 dark:bg-[#141418]/90 backdrop-blur-xl border-black/[0.06] dark:border-white/[0.08]` — the `glass-nav` CSS utility (`@utility` in `index.css`) exists but is not currently used by any component
-- **Active pill style**: `bg-black text-white dark:bg-white dark:text-black` — used in CategoryFilter, season selectors, occasion selectors
-- **Overlay pattern**: `fixed inset-0 z-50` with `bg-black/40 backdrop-blur-sm` backdrop — used by ClothingUploadDialog and ClothingDetailSheet
+- **Glass card style**: `bg-[hsl(var(--frost)/0.7)] backdrop-blur-xl border border-[hsl(var(--border)/0.4)] shadow-[0_4px_24px_-2px_hsl(210_80%_60%/0.12)]` — used on all cards. Hover: `hover:shadow-[0_8px_32px_-4px_hsl(210_90%_40%/0.15)] hover:scale-[1.02]`. Touch: `active:scale-[0.98] touch-press`.
+- **Glass nav style**: `bg-[hsl(var(--frost)/0.85)] backdrop-blur-xl` with glacier accent line — MobileNav and Header use this pattern
+- **Active pill style**: `bg-[hsl(var(--glacier))] text-white` — glacier blue fill. Used in CategoryFilter, season selectors, nav items
+- **Inactive pill style**: `bg-[hsl(var(--frost)/0.5)] text-muted-foreground border-[hsl(var(--border)/0.4)]`
+- **Overlay pattern**: `fixed inset-0 z-50` with animated backdrop + slide-up panel using `useAnimatedMount` and `useScrollLock` hooks
   - Dialog: slides from bottom on mobile (`items-end`), centered on md+ (`md:items-center`); max-w-lg, rounded-t-3xl md:rounded-3xl
-  - Detail sheet: slides from bottom on mobile, right panel on md+ (`md:w-96 md:h-full`); rounded-t-3xl md:rounded-none
+  - Detail sheet: slides from bottom on mobile with swipe-to-dismiss gesture (drag handle pill on header), right panel on md+ (`md:w-96 md:h-full`); rounded-t-3xl md:rounded-none
 - **Outfit generation requirement**: wardrobe must contain at least 1 top + 1 bottom + 1 shoes; GenerateButton disabled otherwise
 - **OutfitSlot `isGenerating`**: passes `animate-pulse` class to slot when AI generation is in progress
 <!-- END AUTO-MANAGED -->
@@ -119,18 +120,24 @@ src/
 - **React** — UI framework
 - **React Router DOM** — client-side routing
 - **Zustand** — global state management
-- **Tailwind CSS v4** (`@tailwindcss/vite` plugin) + `tailwindcss-animate` — styling with animation support
+- **Tailwind CSS v4** (`@tailwindcss/vite` plugin) — styling with animation support
 - **tailwind-merge** + `clsx` + `class-variance-authority` — variant-safe className composition
 - **lucide-react** — icon set
 - **Vite** + `@vitejs/plugin-react` — build tooling
 
-### Theme System
-- Tailwind v4: `@import "tailwindcss"` in `index.css`; `@theme inline` maps CSS vars to Tailwind tokens (e.g. `--color-primary`, `--radius-lg`)
+### Theme System — Peak Drip (Alpine Frost)
+- Tailwind v4: `@import "tailwindcss"` in `index.css`; `@theme inline` maps CSS vars to Tailwind tokens
 - Dark mode: `@custom-variant dark (&:is(.dark *))` — toggled via `.dark` class on root element
-- Color tokens (HSL vars): `--background`, `--foreground`, `--primary`, `--secondary`, `--muted`, `--accent`, `--destructive`, `--border`, `--input`, `--ring`
-- Border radius token: `--radius` (default `0.75rem`); derived tokens `--radius-sm` through `--radius-3xl` via `calc()`
-- Font token: `--font-sans: 'Inter', ui-sans-serif, ...`
-- Glass `@utility` classes in `index.css`: `glass`, `glass-card`, `glass-card-lg`, `glass-nav` — defined using `oklch(from white l c h / ...)` syntax; inline class strings are used in practice for all card and nav components (none currently reference these utilities directly)
+- Full design system reference: `DESIGN_SYSTEM.md` at project root (authoritative for all visual decisions)
+- Color tokens (HSL vars): `--background`, `--foreground`, `--primary`, `--secondary`, `--muted`, `--muted-foreground`, `--accent`, `--destructive`, `--border`, `--input`, `--ring` plus Alpine-specific: `--frost`, `--glacier`, `--peak`, `--punctuation`
+- Border radius token: `--radius` (default `0.5rem` — sharper for editorial feel); derived tokens via `calc()`
+- Font tokens: `--font-display: 'Citadel Script', 'Playfair Display', Georgia, serif` (hero headlines only, NOT logo); `--font-sans: 'Helvetica Now Display', 'DM Sans', 'Inter', system-ui` (logo, UI, body)
+- Glass pattern: `bg-[hsl(var(--frost)/0.7)] backdrop-blur-xl border border-[hsl(var(--border)/0.4)] shadow-[0_4px_24px_-2px_hsl(210_80%_60%/0.12)]` — all components use semantic tokens, not the old `bg-white/70 dark:bg-white/[0.06]` pattern
+- Active states: `bg-[hsl(var(--glacier))] text-white` — glacier blue
+- Danger/delete: `border-[hsl(var(--punctuation)/0.3)] text-[hsl(var(--punctuation))] hover:bg-[hsl(var(--punctuation)/0.06)]` — red punctuation token
+- Red punctuation: `<RedPunct>.</RedPunct>` component or `.text-[hsl(var(--punctuation))]` — for brand moments, never for errors
+- Touch: `active:scale-[0.98] touch-press` on all interactive cards for mobile press feedback
+- Safe area: `safe-area-bottom` / `safe-area-top` utilities using `env(safe-area-inset-*)`
 
 ### Type Reference
 - `ClothingCategory`: tops | bottoms | outerwear | dresses | shoes | accessories

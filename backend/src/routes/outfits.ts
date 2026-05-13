@@ -1,22 +1,17 @@
 import { Router, Request, Response } from 'express';
 import Outfit from '../models/Outfit';
 import WardrobeItem from '../models/WardrobeItem';
-import User from '../models/User';
 import { REASONING_TEMPLATES } from '../seed/data';
+import { checkGenerationLimit, incrementGenerationCount } from '../middleware/featureGate';
 
 const router = Router();
-
-async function getDemoUserId(): Promise<string> {
-  const user = await User.findOne({ email: 'alex@idrip.demo' });
-  return user!._id.toString();
-}
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-router.post('/generate', async (req: Request, res: Response) => {
-  const userId = await getDemoUserId();
+router.post('/generate', checkGenerationLimit, async (req: Request, res: Response) => {
+  const userId = req.userId;
   const { occasion = 'everyday', season } = req.body;
 
   const filter: Record<string, unknown> = { userId };
@@ -68,11 +63,12 @@ router.post('/generate', async (req: Request, res: Response) => {
   });
 
   const populated = await outfit.populate('items');
+  await incrementGenerationCount(userId!);
   res.status(201).json({ outfit: populated });
 });
 
 router.get('/', async (req: Request, res: Response) => {
-  const userId = await getDemoUserId();
+  const userId = req.userId;
   const { occasion } = req.query;
 
   const filter: Record<string, unknown> = { userId };

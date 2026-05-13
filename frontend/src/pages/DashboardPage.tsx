@@ -34,7 +34,7 @@ export default function DashboardPage() {
   return (
     <PageContainer>
       <div className="mb-8">
-        <h2 className="text-2xl font-bold">Welcome back, {user.name.split(" ")[0]}</h2>
+        <h2 className="text-2xl font-bold">Welcome back, {user?.name?.split(" ")[0] || "User"}</h2>
         <p className="text-sm text-muted-foreground mt-1">Here's your style overview</p>
       </div>
 

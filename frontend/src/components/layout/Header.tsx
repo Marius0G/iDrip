@@ -1,14 +1,22 @@
+import { useUserStore } from "@/stores/useUserStore";
+
 export function Header() {
+  const user = useUserStore((s) => s.user);
+
   return (
-    <header className="md:hidden sticky top-0 z-40 bg-white/80 dark:bg-[#141418]/90 backdrop-blur-xl border-b border-black/[0.06] dark:border-white/[0.08] px-4 py-3">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold tracking-tight">
-          <span className="text-black dark:text-white">iDrip</span>
+    <header className="md:hidden sticky top-0 z-40 bg-[hsl(var(--frost)/0.8)] backdrop-blur-xl safe-area-top">
+      <div className="flex items-center justify-between px-4 py-2.5">
+        <h1 className="text-lg font-bold tracking-tight">
+          iDrip<span className="text-[hsl(var(--punctuation))]">.</span>
         </h1>
-        <div className="w-8 h-8 rounded-full bg-black/10 dark:bg-white/10 flex items-center justify-center">
-          <span className="text-xs font-semibold">A</span>
+        <div className="w-7 h-7 rounded-lg bg-[hsl(var(--glacier)/0.12)] flex items-center justify-center border border-[hsl(var(--glacier)/0.2)]">
+          <span className="text-[11px] font-semibold text-[hsl(var(--peak))]">
+            {user?.name?.charAt(0) || "?"}
+          </span>
         </div>
       </div>
+      {/* Glacier accent line */}
+      <div className="absolute bottom-0 left-4 right-4 h-px bg-[hsl(var(--glacier)/0.25)]" />
     </header>
   );
 }

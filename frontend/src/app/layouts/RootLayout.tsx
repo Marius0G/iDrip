@@ -1,15 +1,19 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { Header } from "@/components/layout/Header";
 
 export default function RootLayout() {
+  const { pathname } = useLocation();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-[#0a0a0f] dark:via-[#0d0d14] dark:to-[#0a0a12]">
+    <div className="min-h-screen bg-snowdrift">
       <Sidebar />
       <Header />
       <main className="md:ml-64">
-        <Outlet />
+        <div key={pathname} className="animate-frost-reveal">
+          <Outlet />
+        </div>
       </main>
       <MobileNav />
     </div>

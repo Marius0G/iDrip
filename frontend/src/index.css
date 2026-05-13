@@ -1,8 +1,107 @@
 @import "tailwindcss";
 
+/* ─── Alpine Frost Design System ─── */
+
+/*
+ * Font Strategy:
+ *   Display: Citadel Script (self-hosted WOFF2/TTF) — headlines, logo, statement text
+ *   Body:    Helvetica Now Display (self-hosted WOFF2/OTF) — UI, navigation, body copy
+ *
+ * Fallback stack when self-hosted fonts aren't loaded:
+ *   Display: 'Playfair Display' (Google Fonts) → Georgia serif
+ *   Body:    'DM Sans' (Google Fonts) → Inter → system sans-serif
+ */
+
+/* ─── Citadel Script (Display) ─── */
+@font-face {
+  font-family: 'Citadel Script';
+  src: url('/fonts/CitadelScript-Regular.woff2') format('woff2'),
+       url('/fonts/CitadelScript-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─── Helvetica Now Display (Body) ─── */
+@font-face {
+  font-family: 'Helvetica Now Display';
+  src: url('/fonts/HelveticaNowDisplay-Light.woff2') format('woff2'),
+       url('/fonts/HelveticaNowDisplay-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Now Display';
+  src: url('/fonts/HelveticaNowDisplay-LightItalic.otf') format('opentype');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Now Display';
+  src: url('/fonts/HelveticaNowDisplay-Regular.woff2') format('woff2'),
+       url('/fonts/HelveticaNowDisplay-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Now Display';
+  src: url('/fonts/HelveticaNowDisplay-RegularItalic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Now Display';
+  src: url('/fonts/HelveticaNowDisplay-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Now Display';
+  src: url('/fonts/HelveticaNowDisplay-MediumItalic.otf') format('opentype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Now Display';
+  src: url('/fonts/HelveticaNowDisplay-Bold.woff2') format('woff2'),
+       url('/fonts/HelveticaNowDisplay-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Now Display';
+  src: url('/fonts/HelveticaNowDisplay-BoldItalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Now Display';
+  src: url('/fonts/HelveticaNowDisplay-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* ─── Colors: Alpine Frost Palette ─── */
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
@@ -23,6 +122,13 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
+  /* ─── Ice surface tokens ─── */
+  --color-frost: hsl(var(--frost));
+  --color-glacier: hsl(var(--glacier));
+  --color-peak: hsl(var(--peak));
+  --color-punctuation: hsl(var(--punctuation));
+
+  /* ─── Radii — slightly sharper for editorial feel ─── */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -30,12 +136,26 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 16px);
 
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* ─── Typography ─── */
+  /* When you self-host Citadel Script + Helvetica Now Display, swap these: */
+  --font-display: 'Citadel Script', 'Playfair Display', Georgia, serif;
+  --font-sans: 'Helvetica Now Display', 'DM Sans', 'Helvetica Neue', Helvetica, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
+  /* ─── Shadows — cold, high-altitude ─── */
+  --shadow-frost: 0 4px 24px -2px hsl(210 80% 60% / 0.12), 0 2px 8px -1px hsl(210 60% 40% / 0.06);
+  --shadow-glacier: 0 8px 32px -4px hsl(210 90% 40% / 0.15), 0 4px 12px -2px hsl(210 70% 30% / 0.08);
+  --shadow-peak: 0 20px 48px -8px hsl(220 30% 15% / 0.25), 0 8px 20px -4px hsl(220 25% 10% / 0.12);
+
+  /* ─── Animations ─── */
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-peak-in: peak-in 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-frost-reveal: frost-reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-drift: drift 20s linear infinite;
 }
 
+/* ─── Keyframes ─── */
 @keyframes accordion-down {
   from { height: 0; }
   to { height: var(--radix-accordion-content-height); }
@@ -46,90 +166,339 @@
   to { height: 0; }
 }
 
+@keyframes peak-in {
+  from {
+    opacity: 0;
+    clip-path: polygon(50% 0%, 50% 0%, 50% 100%, 50% 100%);
+  }
+  to {
+    opacity: 1;
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+  }
+}
+
+@keyframes frost-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes drift {
+  from { background-position: 0% 0%; }
+  to { background-position: 100% 100%; }
+}
+
+/* ─── Base Layer ─── */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --radius: 0.75rem;
+    /* Alpine Day — crisp snow under morning light */
+    --background: 210 30% 97%;
+    --foreground: 220 25% 10%;
+    --card: 210 20% 99%;
+    --card-foreground: 220 25% 10%;
+    --popover: 210 20% 99%;
+    --popover-foreground: 220 25% 10%;
+    --primary: 210 90% 35%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 25% 93%;
+    --secondary-foreground: 220 25% 14%;
+    --muted: 210 20% 90%;
+    --muted-foreground: 215 15% 42%;
+    --accent: 355 85% 48%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 15% 84%;
+    --input: 210 15% 86%;
+    --ring: 210 90% 40%;
+
+    /* Alpine-specific tokens */
+    --frost: 210 30% 96%;
+    --glacier: 210 80% 42%;
+    --peak: 220 20% 18%;
+    --punctuation: 355 85% 50%;
+
+    --radius: 0.5rem;
   }
 
   .dark {
-    --background: 0 0% 5%;
-    --foreground: 0 0% 95%;
-    --card: 0 0% 9%;
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 0 0% 16%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 250 30% 22%;
-    --accent-foreground: 250 30% 90%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 250 30% 60%;
-  }
-}
+    /* Alpine Night — deep mountain darkness, moon on snow */
+    --background: 222 25% 4%;
+    --foreground: 210 15% 92%;
+    --card: 222 20% 8%;
+    --card-foreground: 210 15% 92%;
+    --popover: 222 20% 8%;
+    --popover-foreground: 210 15% 92%;
+    --primary: 210 80% 52%;
+    --primary-foreground: 220 20% 5%;
+    --secondary: 220 16% 16%;
+    --secondary-foreground: 210 15% 92%;
+    --muted: 220 14% 20%;
+    --muted-foreground: 215 8% 75%;
+    --accent: 355 80% 54%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 12% 22%;
+    --input: 220 12% 20%;
+    --ring: 210 80% 55%;
 
-@layer base {
-  * {
-    border-color: var(--color-border);
+    --frost: 220 16% 14%;
+    --glacier: 210 80% 48%;
+    --peak: 210 12% 90%;
+    --punctuation: 355 82% 56%;
   }
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    font-family: var(--font-sans);
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    font-feature-settings: "cv01", "cv03", "cv04";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans);
+    letter-spacing: -0.01em;
+    line-height: 1.5;
+  }
+
+  /* ─── Editorial typography base ─── */
+  h1, h2, h3, h4 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  /* ─── Red punctuation — core editorial detail ─── */
+  .punctuation {
+    color: hsl(var(--punctuation));
+  }
+
+  /* ─── Alpine link underlines — red, thin ─── */
+  a[href]:not([class]) {
+    text-decoration: underline;
+    text-decoration-color: hsl(var(--punctuation) / 0.4);
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    transition: text-decoration-color 0.2s ease;
+  }
+
+  a[href]:not([class]):hover {
+    text-decoration-color: hsl(var(--punctuation));
+  }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   Glass Utilities — Icy Frost Variants
+   ═══════════════════════════════════════════════════════════════ */
+
 @utility glass {
-  background-color: oklch(from white l c h / 70%);
-  backdrop-filter: blur(24px);
-  border: 1px solid oklch(from white l c h / 20%);
+  background: hsl(var(--frost) / 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid hsl(var(--border) / 0.5);
 }
 
 @utility glass-card {
-  background-color: oklch(from white l c h / 70%);
+  background: hsl(var(--frost) / 0.7);
   backdrop-filter: blur(24px);
-  border: 1px solid oklch(from white l c h / 20%);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid hsl(210 15% 88% / 0.6);
   border-radius: var(--radius-2xl);
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  box-shadow: var(--shadow-frost);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
 }
 
 @utility glass-card-lg {
-  background-color: oklch(from white l c h / 70%);
-  backdrop-filter: blur(24px);
-  border: 1px solid oklch(from white l c h / 20%);
+  background: hsl(var(--frost) / 0.75);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid hsl(210 15% 88% / 0.6);
   border-radius: var(--radius-3xl);
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  box-shadow: var(--shadow-glacier);
 }
 
 @utility glass-nav {
-  background-color: oklch(from white l c h / 80%);
+  background: hsl(var(--frost) / 0.8);
   backdrop-filter: blur(24px);
-  border-top: 1px solid oklch(from white l c h / 20%);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid hsl(var(--border) / 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Angular Geometry — Peak & Diagonal Utilities
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Top-left to bottom-right diagonal cut (ascending peak) */
+@utility clip-peak-up {
+  clip-path: polygon(0% 8%, 100% 0%, 100% 92%, 0% 100%);
+}
+
+/* Top-right to bottom-left diagonal cut (descending peak) */
+@utility clip-peak-down {
+  clip-path: polygon(0% 0%, 100% 8%, 100% 100%, 0% 92%);
+}
+
+/* Sharp chevron pointing up — for hero sections */
+@utility clip-chevron-up {
+  clip-path: polygon(50% 0%, 100% 12%, 100% 100%, 0% 100%, 0% 12%);
+}
+
+/* Angular bottom edge — like a mountain ridgeline */
+@utility clip-ridgeline {
+  clip-path: polygon(0% 0%, 100% 0%, 100% 92%, 85% 96%, 60% 88%, 35% 95%, 15% 90%, 0% 97%);
+}
+
+/* Diagonal slash divider — for section breaks */
+@utility divider-slash {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(105deg, transparent 0%, hsl(var(--border)) 15%, hsl(var(--border)) 85%, transparent 100%);
+  }
+}
+
+/* Angular accent corner — small red triangle in top-right */
+@utility corner-accent {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 24px;
+    height: 24px;
+    background: hsl(var(--punctuation) / 0.15);
+    clip-path: polygon(100% 0%, 0% 0%, 100% 100%);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Typography Utilities
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Display headline — Citadel Script */
+@utility text-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+/* Editorial overline — small, tracked-out, all caps */
+@utility text-overline {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Red punctuation dot — for "iDrip." style branding */
+@utility dot-red {
+  color: hsl(var(--punctuation));
+}
+
+/* Underline with red accent */
+@utility underline-red {
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--punctuation) / 0.5);
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1.5px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Background & Atmosphere
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Subtle snowdrift gradient for page backgrounds */
+@utility bg-snowdrift {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, hsl(210 50% 94% / 0.6), transparent),
+    radial-gradient(ellipse 60% 50% at 80% 90%, hsl(210 30% 96% / 0.4), transparent),
+    hsl(var(--background));
+}
+
+/* Frost noise overlay — grain texture */
+@utility bg-frost-noise {
+  position: relative;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 128px 128px;
+    pointer-events: none;
+  }
+}
+
+/* Glacier gradient — for accent strips and CTAs */
+@utility bg-glacier {
+  background: linear-gradient(135deg, hsl(210 90% 40%), hsl(200 85% 50%), hsl(210 80% 35%));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Staggered Reveal — for list items and grids
+   ═══════════════════════════════════════════════════════════════ */
+
+@utility stagger-1 { animation: frost-reveal 0.5s 0.05s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@utility stagger-2 { animation: frost-reveal 0.5s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@utility stagger-3 { animation: frost-reveal 0.5s 0.15s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@utility stagger-4 { animation: frost-reveal 0.5s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@utility stagger-5 { animation: frost-reveal 0.5s 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@utility stagger-6 { animation: frost-reveal 0.5s 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* ═══════════════════════════════════════════════════════════════
+   Safe Area — iOS notch / home indicator
+   ═══════════════════════════════════════════════════════════════ */
+
+@utility safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Touch & Accessibility
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (hover: none) {
+  .touch-press:active {
+    transform: scale(0.97);
+    transition: transform 0.1s ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,6 +1,9 @@
 export const DEMO_USER = {
+  googleId: 'demo-user',
   name: 'Alex Demo',
   email: 'alex@idrip.demo',
+  avatarUrl: '',
+  refreshToken: '',
   preferences: {
     styles: ['streetwear', 'minimalist', 'casual'],
     favoriteColors: ['black', 'white', 'olive', 'cream'],

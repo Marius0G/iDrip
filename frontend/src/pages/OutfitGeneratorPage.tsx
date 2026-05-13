@@ -47,7 +47,7 @@ export default function OutfitGeneratorPage() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 p-1 rounded-xl bg-black/5 dark:bg-white/5 mb-6 w-fit">
+      <div className="flex gap-1 p-1 rounded-xl bg-[hsl(var(--frost))] mb-6 w-fit">
         {[
           { key: "builder" as const, label: "Builder" },
           { key: "saved" as const, label: `Saved (${outfits.length})` },
@@ -56,7 +56,7 @@ export default function OutfitGeneratorPage() {
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-medium transition-all",
               activeTab === tab.key
-                ? "bg-white dark:bg-black shadow-sm text-foreground"
+                ? "bg-[hsl(var(--frost)/0.9)] shadow-sm text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}>
             {tab.label}
@@ -75,8 +75,8 @@ export default function OutfitGeneratorPage() {
                   className={cn(
                     "px-4 py-2 rounded-xl text-sm font-medium transition-all border",
                     occasion === o.value
-                      ? "bg-black text-white dark:bg-white dark:text-black border-transparent"
-                      : "bg-white/50 dark:bg-white/5 text-muted-foreground border-white/20 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10"
+                      ? "bg-[hsl(var(--glacier))] text-white border-transparent"
+                      : "bg-[hsl(var(--frost)/0.5)] text-muted-foreground border-[hsl(var(--border)/0.4)] hover:bg-[hsl(var(--frost))]"
                   )}>
                   {o.label}
                 </button>
@@ -93,8 +93,8 @@ export default function OutfitGeneratorPage() {
                   className={cn(
                     "px-4 py-2 rounded-xl text-sm font-medium transition-all border",
                     season === s.value
-                      ? "bg-black text-white dark:bg-white dark:text-black border-transparent"
-                      : "bg-white/50 dark:bg-white/5 text-muted-foreground border-white/20 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10"
+                      ? "bg-[hsl(var(--glacier))] text-white border-transparent"
+                      : "bg-[hsl(var(--frost)/0.5)] text-muted-foreground border-[hsl(var(--border)/0.4)] hover:bg-[hsl(var(--frost))]"
                   )}>
                   {s.label}
                 </button>
@@ -107,7 +107,7 @@ export default function OutfitGeneratorPage() {
 
           {/* AI Reasoning */}
           {currentBuild.top && !isGenerating && (
-            <div className="bg-white/70 dark:bg-black/70 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-4 shadow-lg">
+            <div className="bg-[hsl(var(--frost)/0.7)] backdrop-blur-xl border border-[hsl(var(--border)/0.4)] rounded-2xl p-4 shadow-[0_4px_24px_-2px_hsl(210_80%_60%/0.12)]">
               <div className="flex items-center gap-2 mb-2">
                 <Wand2 className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm font-medium">AI Reasoning</span>

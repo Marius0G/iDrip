@@ -12,7 +12,7 @@ export function BudgetSlider({ budget, spent, onChange }: BudgetSliderProps) {
   const percentage = (spent / budget) * 100;
 
   return (
-    <div className="bg-white/70 dark:bg-white/[0.06] backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] rounded-2xl p-5 shadow-lg dark:shadow-black/20 transition-all duration-300">
+    <div className="bg-[hsl(var(--frost)/0.7)] backdrop-blur-xl border border-[hsl(var(--border)/0.4)] rounded-2xl p-5 shadow-[0_4px_24px_-2px_hsl(210_80%_60%/0.12)] transition-all duration-300">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <DollarSign className="w-5 h-5 text-muted-foreground" />
@@ -27,8 +27,8 @@ export function BudgetSlider({ budget, spent, onChange }: BudgetSliderProps) {
       </div>
 
       {/* Progress bar */}
-      <div className="w-full h-2 rounded-full bg-black/5 dark:bg-white/10 mb-4 overflow-hidden">
-        <div className="h-full rounded-full bg-black dark:bg-white transition-all duration-500" style={{ width: `${Math.min(percentage, 100)}%` }} />
+      <div className="w-full h-2 rounded-full bg-[hsl(var(--frost))] mb-4 overflow-hidden">
+        <div className="h-full rounded-full bg-[hsl(var(--glacier))] transition-all duration-500" style={{ width: `${Math.min(percentage, 100)}%` }} />
       </div>
 
       {/* Slider */}
@@ -41,7 +41,7 @@ export function BudgetSlider({ budget, spent, onChange }: BudgetSliderProps) {
           step={10}
           value={budget}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full h-2 rounded-full appearance-none bg-black/10 dark:bg-white/10 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:dark:bg-white [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer"
+          className="w-full h-2 rounded-full appearance-none bg-[hsl(var(--border)/0.4)] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[hsl(var(--glacier))] [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer"
         />
       </div>
     </div>

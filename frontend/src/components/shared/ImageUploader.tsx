@@ -41,7 +41,7 @@ export function ImageUploader({ preview, onFileSelect, onClear, isProcessing, cl
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
       className={cn(
-        "flex flex-col items-center justify-center h-48 rounded-2xl border-2 border-dashed border-black/10 dark:border-white/10 cursor-pointer hover:border-black/20 dark:hover:border-white/20 transition-colors bg-black/[0.02] dark:bg-white/[0.02]",
+        "flex flex-col items-center justify-center h-48 rounded-2xl border-2 border-dashed border-[hsl(var(--border)/0.5)] cursor-pointer hover:border-[hsl(var(--glacier)/0.4)] transition-colors bg-[hsl(var(--frost)/0.4)]",
         isProcessing && "opacity-50 pointer-events-none",
         className
       )}

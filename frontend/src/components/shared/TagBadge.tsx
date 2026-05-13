@@ -14,8 +14,8 @@ export function TagBadge({ label, active, onClick, className }: TagBadgeProps) {
       className={cn(
         "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border",
         active
-          ? "bg-black text-white dark:bg-white dark:text-black border-transparent"
-          : "bg-white/50 dark:bg-white/5 text-muted-foreground border-white/20 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10",
+          ? "bg-[hsl(var(--glacier))] text-white border-transparent"
+          : "bg-[hsl(var(--frost)/0.5)] text-muted-foreground border-[hsl(var(--border)/0.4)] hover:bg-[hsl(var(--frost))]",
         onClick && "cursor-pointer",
         className
       )}

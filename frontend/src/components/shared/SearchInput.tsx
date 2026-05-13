@@ -25,7 +25,7 @@ export function SearchInput({ value, onChange, placeholder = "Search...", classN
         value={localValue}
         onChange={(e) => setLocalValue(e.target.value)}
         placeholder={placeholder}
-        className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-white/50 dark:bg-white/5 border border-white/20 dark:border-white/10 backdrop-blur-sm text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 transition-all"
+        className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-[hsl(var(--frost)/0.5)] border border-[hsl(var(--border)/0.4)] backdrop-blur-sm text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--glacier)/0.3)] transition-all"
       />
       {localValue && (
         <button onClick={() => { setLocalValue(""); onChange(""); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">

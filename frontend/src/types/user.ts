@@ -2,6 +2,7 @@ import type { BudgetSettings, StylePreference } from "./shopping";
 
 export interface User {
   id: string;
+  googleId?: string;
   name: string;
   email: string;
   avatarUrl?: string;
