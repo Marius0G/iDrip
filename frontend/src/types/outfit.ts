@@ -1,7 +1,13 @@
 import type { ClothingItem } from "./wardrobe";
 import type { Season } from "./wardrobe";
 
-export type OutfitOccasion = "casual" | "work" | "formal" | "date" | "sport" | "travel";
+export type OutfitOccasion =
+  | "casual" | "business" | "formal" | "date" | "sport"
+  | "party" | "travel" | "beach" | "outdoor";
+
+export type Weather =
+  | "rainy" | "snowy" | "sunny" | "cold" | "hot"
+  | "windy" | "humid" | "cloudy" | "mild";
 
 export type OutfitSlotKey = "top" | "bottom" | "outerwear" | "shoes" | "accessory1" | "accessory2";
 
@@ -22,6 +28,12 @@ export interface Outfit {
   aiReasoning?: string;
   score?: number;
   createdAt: string;
+  tags: string[];
+  collectionName: string;
+  colorScheme: string[];
+  weatherScore: number | null;
+  styleScore: number | null;
+  savedByUser: boolean;
 }
 
 export interface OutfitItem {
@@ -31,8 +43,9 @@ export interface OutfitItem {
 }
 
 export interface OutfitGenerationRequest {
-  occasion: OutfitOccasion;
-  season: Season;
-  includeItemIds?: string[];
-  excludeItemIds?: string[];
+  occasion?: OutfitOccasion | null;
+  weather?: Weather | null;
+  season?: Season | null;
+  free_text?: string;
+  feedback?: string;
 }

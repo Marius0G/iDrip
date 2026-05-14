@@ -1,8 +1,9 @@
 import axios from 'axios';
 
-const BASE_URL = process.env.FEATHERLESS_BASE_URL || 'https://api.featherless.ai/v1';
-const MODEL = process.env.FEATHERLESS_MODEL || 'Qwen/Qwen3.6-27B';
-const API_KEY = process.env.FEATHERLESS_API_KEY;
+// OpenAI takes priority if configured, falls back to Featherless
+const BASE_URL = process.env.OPENAI_BASE_URL || process.env.FEATHERLESS_BASE_URL || 'https://api.openai.com/v1';
+const MODEL = process.env.OPENAI_MODEL || process.env.FEATHERLESS_MODEL || 'gpt-4o';
+const API_KEY = process.env.OPENAI_API_KEY || process.env.FEATHERLESS_API_KEY;
 
 export interface ClothingAnalysis {
   name: string;
@@ -77,7 +78,7 @@ JSON schema to return:
 {
   "name": "concise descriptive name (e.g. 'Black Oversized Graphic T-Shirt')",
   "category": "tops|bottoms|outerwear|dresses|shoes|accessories",
-  "subcategory": "canonical value or your best guess (e.g. t-shirt, jeans, sneakers, necklace, socks)",
+  "subcategory": "MUST be one of the following exact values based on the detected category — do NOT invent new ones:\n    tops: t-shirt | button-down | polo | sweater | hoodie | tank-top | blouse | turtleneck | cardigan | henley | sweatshirt | crop-top\n    bottoms: jeans | chinos | trousers | shorts | sweatpants | joggers | cargo-pants | leggings | skirt\n    outerwear: jacket | blazer | coat | vest | bomber | denim-jacket | trench-coat | puffer | parka\n    dresses: mini-dress | midi-dress | maxi-dress | sundress | shirt-dress | slip-dress\n    shoes: sneakers | boots | sandals | loafers | heels | flats\n    accessories: set to null — use accessoryType field instead",
   "primaryColor": "hex code like #1a1a1a",
   "secondaryColors": ["hex codes of other prominent colors"],
   "colorTemperature": "warm|cool|neutral",
@@ -133,46 +134,38 @@ JSON schema to return:
   "confidence": <0.0 to 1.0 — your overall certainty in this analysis>
 }`;
 
-/**
- * Sends a clothing image to Featherless AI for analysis.
- * Featherless has an OpenAI-compatible API.
- */
-export async function analyzeClothing(imageUrl: string): Promise<ClothingAnalysis> {
-  if (!API_KEY) {
-    throw new Error('FEATHERLESS_API_KEY is not configured');
-  }
+const MAX_RETRIES = 2;
+const INITIAL_RETRY_DELAY = 1000; // ms
 
-  const response = await axios.post(
-    `${BASE_URL}/chat/completions`,
-    {
-      model: MODEL,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Analyze this clothing item from the photo and return the JSON description.' },
-            { type: 'image_url', image_url: { url: imageUrl } },
-          ],
-        },
-      ],
-      temperature: 0.1,
-      max_tokens: 2048,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 30000,
+async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Fields that must be single strings, not arrays
+const SINGLE_VALUE_FIELDS = new Set([
+  'pattern', 'material', 'texture', 'transparency', 'printType', 'gender',
+  'fit', 'sleeveLength', 'sleeveStyle', 'neckline', 'collarType', 'cuffStyle',
+  'length', 'hemStyle', 'closureType', 'rise', 'pleatStyle', 'distressing',
+  'waistbandStyle', 'silhouette', 'backDetail', 'strapStyle', 'lining',
+  'warmthLevel', 'waterResistance', 'hood', 'pockets',
+  'heelHeight', 'heelStyle', 'toeStyle', 'soleType', 'shaftHeight',
+  'accessoryType', 'bandWidth', 'sockHeight', 'necklaceLength',
+  'hatStyle', 'earringStyle', 'tieStyle', 'watchStyle', 'lensColor',
+  'legOpening', 'colorTemperature', 'colorIntensity', 'subcategory',
+  'primaryColor', 'brand', 'name',
+]);
+
+function sanitizeAnalysis(raw: Record<string, unknown>): ClothingAnalysis {
+  for (const key of SINGLE_VALUE_FIELDS) {
+    const val = raw[key];
+    if (Array.isArray(val)) {
+      raw[key] = val.length > 0 ? val[0] : null;
     }
-  );
-
-  const content = response.data?.choices?.[0]?.message?.content;
-  if (!content) {
-    throw new Error('Empty response from Featherless AI');
   }
+  return raw as unknown as ClothingAnalysis;
+}
 
+function parseAnalysisFromContent(content: string): ClothingAnalysis {
   // Extract JSON from response (may be wrapped in code fences)
   let jsonStr = content.trim();
   const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -180,22 +173,102 @@ export async function analyzeClothing(imageUrl: string): Promise<ClothingAnalysi
     jsonStr = fenceMatch[1].trim();
   }
 
-  let analysis: ClothingAnalysis;
+  // Try direct parse first
   try {
-    analysis = JSON.parse(jsonStr);
-  } catch {
-    // Attempt to find JSON object in the text
-    const objMatch = jsonStr.match(/\{[\s\S]*\}/);
-    if (!objMatch) {
-      throw new Error('Could not parse AI response as JSON');
+    const analysis = JSON.parse(jsonStr) as Record<string, unknown>;
+    if (!analysis.category) {
+      throw new Error('AI response missing required field: category');
     }
-    analysis = JSON.parse(objMatch[0]);
+    return sanitizeAnalysis(analysis);
+  } catch (err) {
+    if (err instanceof Error && err.message.startsWith('AI response missing')) {
+      throw err;
+    }
   }
 
-  // Ensure required fields exist
+  // Attempt to find JSON object in the text
+  const objMatch = jsonStr.match(/\{[\s\S]*\}/);
+  if (!objMatch) {
+    throw new Error('Could not parse AI response as JSON');
+  }
+  const analysis = JSON.parse(objMatch[0]) as Record<string, unknown>;
   if (!analysis.category) {
     throw new Error('AI response missing required field: category');
   }
+  return sanitizeAnalysis(analysis);
+}
 
-  return analysis;
+/**
+ * Sends a clothing image to Featherless AI for analysis.
+ * Featherless has an OpenAI-compatible API.
+ * Includes retry logic for transient failures (cold starts, empty responses).
+ */
+export async function analyzeClothing(imageUrl: string): Promise<ClothingAnalysis> {
+  if (!API_KEY) {
+    throw new Error('No AI API key configured — set OPENAI_API_KEY or FEATHERLESS_API_KEY');
+  }
+
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/chat/completions`,
+        {
+          model: MODEL,
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: 'Analyze this clothing item from the photo and return the JSON description.' },
+                { type: 'image_url', image_url: { url: imageUrl } },
+              ],
+            },
+          ],
+          temperature: 0.1,
+          max_tokens: 4096,
+          response_format: { type: 'json_object' },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 60000,
+        }
+      );
+
+      const content = response.data?.choices?.[0]?.message?.content;
+      if (!content) {
+        throw new Error('Empty response from Featherless AI');
+      }
+
+      return parseAnalysisFromContent(content);
+    } catch (err: any) {
+      lastError = err;
+
+      // Don't retry configuration errors
+      if (err.message === 'FEATHERLESS_API_KEY is not configured') {
+        throw err;
+      }
+
+      // Don't retry if we got a valid response that just failed validation
+      if (err.message?.startsWith('AI response missing')) {
+        throw err;
+      }
+
+      // On last attempt, give up
+      if (attempt === MAX_RETRIES) {
+        break;
+      }
+
+      // Retry on timeout, empty response, or parse failures
+      const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
+      console.warn(`[featherless] Attempt ${attempt + 1} failed: ${err.message}. Retrying in ${delay}ms...`);
+      await sleep(delay);
+    }
+  }
+
+  throw lastError || new Error('Featherless AI analysis failed after all retries');
 }

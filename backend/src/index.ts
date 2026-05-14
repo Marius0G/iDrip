@@ -24,7 +24,7 @@ app.use(cors(allowedOrigin ? { origin: allowedOrigin } : {}));
 // Stripe webhook must receive raw body before JSON parser
 app.use('/api/subscriptions/webhook', express.raw({ type: 'application/json' }), subscriptionWebhookRoutes);
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok', message: 'iDrip Backend is running' });
@@ -71,6 +71,36 @@ app.get('/api/subscriptions/plans', (_req, res) => {
 
 // Protected subscription routes
 app.use('/api/subscriptions', authMiddleware, subscriptionRoutes);
+
+// Mock upgrade endpoint for local testing without Stripe
+app.post('/api/subscriptions/mock-upgrade', authMiddleware, async (req: express.Request, res: express.Response) => {
+  const { tier } = req.body;
+  if (!tier || !['pro', 'lifetime'].includes(tier)) {
+    res.status(400).json({ error: 'tier must be "pro" or "lifetime"' });
+    return;
+  }
+  const User = require('./models/User').default;
+  const user = await User.findById(req.userId);
+  if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+  user.subscriptionTier = tier;
+  user.subscriptionStatus = 'active';
+  if (tier === 'lifetime') {
+    user.subscriptionExpiry = null;
+  } else {
+    user.subscriptionExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+  }
+  user.generationsUsedThisMonth = 0;
+  await user.save();
+  res.json({ tier, status: 'active', message: `Mock upgrade to ${tier} successful` });
+});
+
+// Global error handler — must be last, after all routes
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('[error-handler]', err.message || err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal server error',
+  });
+});
 
 async function start() {
   await connectDB();

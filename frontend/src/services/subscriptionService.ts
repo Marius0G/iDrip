@@ -21,4 +21,8 @@ export const subscriptionService = {
   cancel(): Promise<{ message: string }> {
     return api.post('/subscriptions/cancel');
   },
+
+  mockUpgrade(tier: 'pro' | 'lifetime'): Promise<{ tier: string; status: string; message: string }> {
+    return api.post('/subscriptions/mock-upgrade', { tier });
+  },
 };

@@ -8,6 +8,12 @@ export interface IOutfit extends Document {
   score: number;
   aiReasoning: string;
   savedByUser: boolean;
+  tags: string[];
+  collectionName: string;
+  colorScheme: string[];
+  weatherScore: number | null;
+  styleScore: number | null;
+  feedback: string;
   createdAt: Date;
 }
 
@@ -20,6 +26,12 @@ const outfitSchema = new Schema<IOutfit>(
     score: { type: Number, default: 85 },
     aiReasoning: { type: String, default: '' },
     savedByUser: { type: Boolean, default: false },
+    tags: { type: [String], default: [] },
+    collectionName: { type: String, default: '' },
+    colorScheme: { type: [String], default: [] },
+    weatherScore: { type: Number, default: null },
+    styleScore: { type: Number, default: null },
+    feedback: { type: String, default: '' },
   },
   { timestamps: true }
 );

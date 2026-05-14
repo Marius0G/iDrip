@@ -12,6 +12,7 @@ interface SubscriptionState {
   fetchPlans: () => Promise<void>;
   fetchCurrentSubscription: () => Promise<void>;
   startCheckout: (priceId: string) => Promise<void>;
+  mockUpgrade: (tier: 'pro' | 'lifetime') => Promise<void>;
   openCustomerPortal: () => Promise<void>;
   reset: () => void;
 }
@@ -55,6 +56,11 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           set({ isRedirecting: false });
           throw err;
         }
+      },
+
+      mockUpgrade: async (tier: 'pro' | 'lifetime') => {
+        await subscriptionService.mockUpgrade(tier);
+        await get().fetchCurrentSubscription();
       },
 
       openCustomerPortal: async () => {

@@ -1,7 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "Bash(Get-ChildItem -Recurse -Depth 2 d:\\\\Proiecte\\\\iDrip\\\\frontend\\\\src)"
+      "Bash(Get-ChildItem -Recurse -Depth 2 d:\\\\Proiecte\\\\iDrip\\\\frontend\\\\src)",
+      "mcp__plugin_context7_context7__query-docs",
+      "Bash(Get-ChildItem -Path \"d:\\\\Proiecte\\\\iDrip\" -Depth 1 -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(python -c \"from main import app; print\\('Module imports OK'\\)\")",
+      "Bash(python -c \"from main import app, agent; print\\('OK: FastAPI app and LangGraph agent loaded successfully'\\)\")",
+      "Bash(dir .env)",
+      "Bash(curl -s http://localhost:8000/health)",
+      "Bash(curl -s -X POST http://localhost:8000/generate-outfit -H \"Content-Type: application/json\" -d \"{\\\\\"user_id\\\\\":\\\\\"test\\\\\",\\\\\"preferences\\\\\":{\\\\\"occasion\\\\\":\\\\\"casual\\\\\"},\\\\\"wardrobe_items\\\\\":[{\\\\\"id\\\\\":\\\\\"a1\\\\\",\\\\\"name\\\\\":\\\\\"White T-Shirt\\\\\",\\\\\"category\\\\\":\\\\\"tops\\\\\",\\\\\"primaryColor\\\\\":\\\\\"#ffffff\\\\\",\\\\\"formality\\\\\":2,\\\\\"style\\\\\":[\\\\\"minimalist\\\\\"],\\\\\"season\\\\\":[\\\\\"summer\\\\\"],\\\\\"material\\\\\":\\\\\"cotton\\\\\"},{\\\\\"id\\\\\":\\\\\"b1\\\\\",\\\\\"name\\\\\":\\\\\"Black Jeans\\\\\",\\\\\"category\\\\\":\\\\\"bottoms\\\\\",\\\\\"primaryColor\\\\\":\\\\\"#1a1a1a\\\\\",\\\\\"formality\\\\\":3,\\\\\"style\\\\\":[\\\\\"minimalist\\\\\"],\\\\\"season\\\\\":[\\\\\"all\\\\\"],\\\\\"material\\\\\":\\\\\"denim\\\\\"},{\\\\\"id\\\\\":\\\\\"s1\\\\\",\\\\\"name\\\\\":\\\\\"White Sneakers\\\\\",\\\\\"category\\\\\":\\\\\"shoes\\\\\",\\\\\"primaryColor\\\\\":\\\\\"#f5f5f5\\\\\",\\\\\"formality\\\\\":2,\\\\\"style\\\\\":[\\\\\"minimalist\\\\\"],\\\\\"season\\\\\":[\\\\\"summer\\\\\"]}]}\")",
+      "Bash(Get-Content d:\\\\Proiecte\\\\iDrip\\\\backend\\\\.env)",
+      "Bash(Select-String -Pattern \"STRIPE_SECRET|OPENAI_API_KEY\")",
+      "Bash(docker-compose exec *)"
     ]
   }
 }

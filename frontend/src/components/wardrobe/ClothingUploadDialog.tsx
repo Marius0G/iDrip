@@ -384,7 +384,7 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
+    <div className="fixed inset-0 z-60 flex items-end md:items-center justify-center">
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
         style={{ opacity: phase === "visible" ? 1 : 0 }}
@@ -392,7 +392,7 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
       />
 
       <div
-        className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto bg-[hsl(var(--frost)/0.95)] backdrop-blur-2xl border border-[hsl(var(--border)/0.4)] rounded-t-3xl md:rounded-3xl shadow-2xl p-6"
+        className="relative w-full max-w-2xl max-h-[85vh] md:max-h-[92vh] overflow-y-auto bg-[hsl(var(--frost)/0.95)] backdrop-blur-2xl border border-[hsl(var(--border)/0.4)] rounded-t-3xl md:rounded-3xl shadow-2xl p-6 pb-24 md:pb-6 safe-area-bottom"
         style={{
           transform: panelTransform,
           transition: phase === "enter" || phase === "exit"

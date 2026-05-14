@@ -37,17 +37,17 @@ router.post('/analyze-clothing', checkRateLimit, async (req: Request, res: Respo
   console.log(`[analyze-clothing] Analyzing image: ${imageUrl.substring(0, 80)}...`);
 
   try {
-    console.log('[analyze-clothing] Calling Featherless...');
+    console.log('[analyze-clothing] Calling AI model...');
     const analysis = await analyzeClothing(imageUrl);
     console.log(`[analyze-clothing] SUCCESS: category=${analysis.category}, confidence=${analysis.confidence}`);
     res.json(analysis);
   } catch (err: any) {
-    if (err.message === 'FEATHERLESS_API_KEY is not configured') {
+    if (err.message === 'No AI API key configured — set OPENAI_API_KEY or FEATHERLESS_API_KEY') {
       console.log('[analyze-clothing] ERROR: API key not configured');
       res.status(503).json({ error: 'AI service is not configured' });
       return;
     }
-    console.error('[analyze-clothing] Featherless error:', err.message);
+    console.error('[analyze-clothing] AI error:', err.message);
     console.error('[analyze-clothing] Full error:', err);
     res.status(503).json({ error: `AI analysis failed: ${err.message}` });
   }

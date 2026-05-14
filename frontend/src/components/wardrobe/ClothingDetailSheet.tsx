@@ -112,7 +112,7 @@ export function ClothingDetailSheet({ item, onClose, onEdit }: ClothingDetailShe
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center md:justify-end">
+    <div className="fixed inset-0 z-60 flex items-end md:items-center md:justify-end">
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
         style={{ opacity: phase === "visible" ? 1 : 0 }}

@@ -1,5 +1,7 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+const DEFAULT_TIMEOUT = 90000; // 90s — backend has 60s + retries, so we give it headroom
+
 function getToken(): string | null {
   return localStorage.getItem('idrip-token');
 }
@@ -20,26 +22,42 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
 
-  if (res.status === 401) {
-    localStorage.removeItem('idrip-token');
-    localStorage.removeItem('idrip-user');
-    window.location.href = '/login';
-    throw new Error('Unauthorized');
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+
+    if (res.status === 401) {
+      localStorage.removeItem('idrip-token');
+      localStorage.removeItem('idrip-user');
+      window.location.href = '/login';
+      throw new Error('Unauthorized');
+    }
+
+    if (res.status === 204) {
+      return undefined as T;
+    }
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Request failed');
+    }
+
+    return data as T;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Request timed out — the server is taking too long. Please try again.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  if (res.status === 204) {
-    return undefined as T;
-  }
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.error || 'Request failed');
-  }
-
-  return data as T;
 }
 
 export const api = {

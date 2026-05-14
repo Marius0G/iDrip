@@ -76,6 +76,7 @@ export interface IWardrobeItem extends Document {
   // Storage
   lining: string;
   publicId: string;
+  embedding: number[];
 }
 
 const wardrobeItemSchema = new Schema<IWardrobeItem>(
@@ -150,6 +151,7 @@ const wardrobeItemSchema = new Schema<IWardrobeItem>(
     // Storage
     lining: { type: String, default: '' },
     publicId: { type: String, default: '' },
+    embedding: { type: [Number], default: [] },
   },
   { timestamps: true }
 );

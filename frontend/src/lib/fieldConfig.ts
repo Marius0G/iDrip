@@ -19,41 +19,41 @@ export interface FieldGroup {
 
 export const CATEGORY_FIELD_GROUPS: Record<ClothingCategory, FieldGroup[]> = {
   tops: [
-    { group: "Basic Info", fields: ["subcategory", "primaryColor", "secondaryColors", "brand"] },
+    { group: "Basic Info", fields: ["subcategory", "primaryColor", "secondaryColors"] },
     { group: "Fit & Shape", fields: ["fit", "length", "sleeveLength", "sleeveStyle", "neckline", "hemStyle"] },
     { group: "Details", fields: ["collarType", "cuffStyle", "closureType", "backDetail", "lining"] },
     { group: "Style", fields: ["pattern", "material", "texture", "transparency", "printType"] },
     { group: "Occasion", fields: ["formality", "occasion", "style", "season", "gender", "colorTemperature", "colorIntensity"] },
   ],
   bottoms: [
-    { group: "Basic Info", fields: ["subcategory", "primaryColor", "secondaryColors", "brand"] },
+    { group: "Basic Info", fields: ["subcategory", "primaryColor", "secondaryColors"] },
     { group: "Fit & Shape", fields: ["fit", "rise", "length", "legOpening"] },
     { group: "Details", fields: ["pleatStyle", "waistbandStyle", "closureType", "distressing", "lining"] },
     { group: "Style", fields: ["pattern", "material", "texture", "transparency", "printType"] },
     { group: "Occasion", fields: ["formality", "occasion", "style", "season", "gender", "colorTemperature", "colorIntensity"] },
   ],
   outerwear: [
-    { group: "Basic Info", fields: ["subcategory", "primaryColor", "secondaryColors", "brand"] },
+    { group: "Basic Info", fields: ["subcategory", "primaryColor", "secondaryColors"] },
     { group: "Fit & Shape", fields: ["fit", "length", "sleeveLength"] },
     { group: "Details", fields: ["collarType", "closureType", "hood", "pockets", "lining", "warmthLevel", "waterResistance"] },
     { group: "Style", fields: ["pattern", "material", "texture", "transparency"] },
     { group: "Occasion", fields: ["formality", "occasion", "style", "season", "gender", "colorTemperature", "colorIntensity"] },
   ],
   dresses: [
-    { group: "Basic Info", fields: ["subcategory", "primaryColor", "secondaryColors", "brand"] },
+    { group: "Basic Info", fields: ["subcategory", "primaryColor", "secondaryColors"] },
     { group: "Fit & Shape", fields: ["silhouette", "fit", "length", "sleeveLength", "sleeveStyle", "neckline", "strapStyle"] },
     { group: "Details", fields: ["closureType", "backDetail", "lining", "hemStyle"] },
     { group: "Style", fields: ["pattern", "material", "texture", "transparency", "printType"] },
     { group: "Occasion", fields: ["formality", "occasion", "style", "season", "gender", "colorTemperature", "colorIntensity"] },
   ],
   shoes: [
-    { group: "Basic Info", fields: ["subcategory", "primaryColor", "secondaryColors", "brand"] },
+    { group: "Basic Info", fields: ["subcategory", "primaryColor", "secondaryColors"] },
     { group: "Details", fields: ["heelHeight", "heelStyle", "toeStyle", "closureType", "soleType", "shaftHeight", "lining", "waterResistance"] },
     { group: "Style", fields: ["pattern", "material", "texture"] },
     { group: "Occasion", fields: ["formality", "occasion", "style", "season", "gender", "colorTemperature", "colorIntensity"] },
   ],
   accessories: [
-    { group: "Basic Info", fields: ["accessoryType", "subcategory", "primaryColor", "secondaryColors", "brand"] },
+    { group: "Basic Info", fields: ["accessoryType", "primaryColor", "secondaryColors"] },
     { group: "Dimensions", fields: ["bandWidth", "sockHeight", "necklaceLength", "hatStyle", "strapStyle"] },
     { group: "Details", fields: ["earringStyle", "tieStyle", "watchStyle", "lensColor", "pattern", "material", "texture"] },
     { group: "Occasion", fields: ["formality", "occasion", "style", "season", "gender", "colorTemperature", "colorIntensity"] },
