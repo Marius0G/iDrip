@@ -32,7 +32,7 @@ export function Sidebar() {
           iDrip<span className="text-[hsl(var(--punctuation))]">.</span>
         </h1>
         <p className="text-overline mt-1.5">
-          AI Personal Stylist
+          AI Personal Stylist<span className="text-[hsl(var(--punctuation))]">.</span>
         </p>
       </div>
 

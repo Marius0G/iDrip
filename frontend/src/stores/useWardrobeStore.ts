@@ -1,16 +1,17 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { ClothingItem, WardrobeFilters } from "@/types/wardrobe";
-import { mockClothingItems } from "@/data/mockClothingItems";
+import type { ClothingItem, ClothingItemInput, WardrobeFilters } from "@/types/wardrobe";
+import { wardrobeService } from "@/services/wardrobeService";
 
 interface WardrobeState {
   items: ClothingItem[];
   filters: WardrobeFilters;
   isLoading: boolean;
-  loadItems: () => void;
-  addItem: (item: Omit<ClothingItem, "id" | "createdAt" | "updatedAt">) => void;
-  updateItem: (id: string, updates: Partial<ClothingItem>) => void;
-  deleteItem: (id: string) => void;
+  error: string | null;
+  initialized: boolean;
+  loadItems: () => Promise<void>;
+  addItem: (data: ClothingItemInput) => Promise<ClothingItem>;
+  updateItem: (id: string, updates: Partial<ClothingItemInput>) => Promise<void>;
+  deleteItem: (id: string) => Promise<void>;
   setFilter: (filter: Partial<WardrobeFilters>) => void;
   resetFilters: () => void;
   getFilteredItems: () => ClothingItem[];
@@ -25,68 +26,71 @@ const defaultFilters: WardrobeFilters = {
   tags: [],
 };
 
-export const useWardrobeStore = create<WardrobeState>()(
-  persist(
-    (set, get) => ({
-      items: [],
-      filters: defaultFilters,
-      isLoading: false,
+export const useWardrobeStore = create<WardrobeState>()((set, get) => ({
+  items: [],
+  filters: defaultFilters,
+  isLoading: false,
+  error: null,
+  initialized: false,
 
-      loadItems: () => {
-        const { items } = get();
-        if (items.length === 0) {
-          set({ items: mockClothingItems });
-        }
-      },
+  loadItems: async () => {
+    if (get().initialized) return;
+    set({ isLoading: true, error: null });
+    try {
+      const items = await wardrobeService.getAll();
+      set({ items, initialized: true });
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : "Failed to load wardrobe" });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
 
-      addItem: (itemData) => {
-        const now = new Date().toISOString();
-        const newItem: ClothingItem = {
-          ...itemData,
-          id: `item-${Date.now()}`,
-          createdAt: now,
-          updatedAt: now,
-        };
-        set((state) => ({ items: [newItem, ...state.items] }));
-      },
+  addItem: async (data) => {
+    const item = await wardrobeService.create(data);
+    set((state) => ({ items: [item, ...state.items] }));
+    return item;
+  },
 
-      updateItem: (id, updates) => {
-        set((state) => ({
-          items: state.items.map((item) =>
-            item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item
-          ),
-        }));
-      },
+  updateItem: async (id, updates) => {
+    const updated = await wardrobeService.update(id, updates);
+    set((state) => ({
+      items: state.items.map((item) => (item.id === id ? updated : item)),
+    }));
+  },
 
-      deleteItem: (id) => {
-        set((state) => ({ items: state.items.filter((item) => item.id !== id) }));
-      },
+  deleteItem: async (id) => {
+    await wardrobeService.remove(id);
+    set((state) => ({ items: state.items.filter((item) => item.id !== id) }));
+  },
 
-      setFilter: (filter) => {
-        set((state) => ({ filters: { ...state.filters, ...filter } }));
-      },
+  setFilter: (filter) => {
+    set((state) => ({ filters: { ...state.filters, ...filter } }));
+  },
 
-      resetFilters: () => {
-        set({ filters: defaultFilters });
-      },
+  resetFilters: () => {
+    set({ filters: defaultFilters });
+  },
 
-      getFilteredItems: () => {
-        const { items, filters } = get();
-        return items.filter((item) => {
-          if (filters.category !== "all" && item.category !== filters.category) return false;
-          if (filters.color !== "all" && item.color !== filters.color) return false;
-          if (filters.season !== "all" && !item.season.includes(filters.season) && !item.season.includes("all")) return false;
-          if (filters.searchQuery) {
-            const q = filters.searchQuery.toLowerCase();
-            if (!item.name.toLowerCase().includes(q) && !item.brand?.toLowerCase().includes(q) && !item.tags.some((t) => t.toLowerCase().includes(q))) return false;
-          }
-          if (filters.tags.length > 0 && !filters.tags.some((t) => item.tags.includes(t))) return false;
-          return true;
-        });
-      },
+  getFilteredItems: () => {
+    const { items, filters } = get();
+    return items.filter((item) => {
+      if (filters.category !== "all" && item.category !== filters.category) return false;
+      if (filters.color !== "all" && item.color !== filters.color) return false;
+      if (filters.season !== "all" && !item.season.includes(filters.season) && !item.season.includes("all")) return false;
+      if (filters.searchQuery) {
+        const q = filters.searchQuery.toLowerCase();
+        if (
+          !item.name.toLowerCase().includes(q) &&
+          !item.brand?.toLowerCase().includes(q) &&
+          !item.tags.some((t) => t.toLowerCase().includes(q))
+        )
+          return false;
+      }
+      if (filters.tags.length > 0 && !filters.tags.some((t) => item.tags.includes(t))) return false;
+      return true;
+    });
+  },
 
-      getItemById: (id) => get().items.find((item) => item.id === id),
-    }),
-    { name: "idrip-wardrobe" }
-  )
-);
+  getItemById: (id) => get().items.find((item) => item.id === id),
+}));

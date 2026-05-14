@@ -26,7 +26,7 @@ export function StatCard({
       <div className="flex items-start justify-between">
         <div>
           <p className="text-overline">{label}</p>
-          <p className="text-3xl font-bold mt-1 text-[hsl(var(--peak))]">
+          <p className="text-4xl font-bold mt-1 text-[hsl(var(--peak))]">
             {value}
           </p>
           {subtitle && (

@@ -34,10 +34,17 @@ export default function ProfilePage() {
   }));
 
   return (
-    <PageContainer>
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold">Profile</h2>
-        <p className="text-sm text-muted-foreground mt-1">Manage your preferences</p>
+    <PageContainer noTopPadding>
+      <div className="mb-8">
+        <p className="text-overline mb-2">
+          SETTINGS<span className="text-[hsl(var(--punctuation))]">.</span>
+        </p>
+        <h2 className="text-display text-4xl md:text-5xl text-[hsl(var(--peak))] mb-2">
+          Profile
+        </h2>
+        <p className="text-base text-muted-foreground">
+          Manage your preferences<span className="text-[hsl(var(--punctuation))]">.</span>
+        </p>
       </div>
 
       <div className="space-y-6 max-w-2xl">

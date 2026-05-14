@@ -11,6 +11,7 @@ import wardrobeRoutes from './routes/wardrobe';
 import outfitRoutes from './routes/outfits';
 import recommendationRoutes from './routes/recommendations';
 import userRoutes from './routes/users';
+import aiRoutes from './routes/ai';
 import subscriptionWebhookRoutes from './routes/subscriptionWebhook';
 import subscriptionRoutes from './routes/subscriptions';
 
@@ -35,6 +36,7 @@ app.use('/api/wardrobe', authMiddleware, wardrobeRoutes);
 app.use('/api/outfits', authMiddleware, outfitRoutes);
 app.use('/api/recommendations', authMiddleware, recommendationRoutes);
 app.use('/api/users', authMiddleware, userRoutes);
+app.use('/api/ai', authMiddleware, aiRoutes);
 // Public plans endpoint
 app.get('/api/subscriptions/plans', (_req, res) => {
   const { PRICE_IDS } = require('./lib/stripe');

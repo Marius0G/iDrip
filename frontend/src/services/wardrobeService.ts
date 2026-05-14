@@ -1,21 +1,44 @@
-import type { ClothingItem } from "@/types/wardrobe";
+import type { ClothingItem, ClothingItemInput } from "@/types/wardrobe";
+import { api } from "@/lib/api";
 
-const delay = (ms: number = 300) => new Promise((r) => setTimeout(r, ms));
+interface WardrobeListResponse {
+  items: ClothingItem[];
+  count: number;
+}
+
+interface UploadImageResponse {
+  imageUrl: string;
+  publicId: string;
+}
+
+// Re-export the analysis type from featherlessService for convenience
+export type { ClothingAnalysis } from "./featherlessService";
 
 export const wardrobeService = {
   async getAll(): Promise<ClothingItem[]> {
-    await delay();
-    return [];
+    const res = await api.get<WardrobeListResponse>("/wardrobe");
+    return res.items;
   },
-  async create(item: Omit<ClothingItem, "id" | "createdAt" | "updatedAt">): Promise<ClothingItem> {
-    await delay();
-    return { ...item, id: `item-${Date.now()}`, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+
+  async getById(id: string): Promise<ClothingItem> {
+    return api.get<ClothingItem>(`/api/wardrobe/${id}`);
   },
-  async update(id: string, updates: Partial<ClothingItem>): Promise<ClothingItem> {
-    await delay();
-    return { id, ...updates } as ClothingItem;
+
+  async create(data: ClothingItemInput): Promise<ClothingItem> {
+    return api.post<ClothingItem>("/wardrobe", data);
   },
-  async delete(_id: string): Promise<void> {
-    await delay();
+
+  async update(id: string, updates: Partial<ClothingItemInput>): Promise<ClothingItem> {
+    return api.put<ClothingItem>(`/api/wardrobe/${id}`, updates);
+  },
+
+  async remove(id: string): Promise<void> {
+    return api.delete<void>(`/api/wardrobe/${id}`);
+  },
+
+  async uploadImage(file: File): Promise<UploadImageResponse> {
+    const formData = new FormData();
+    formData.append("image", file);
+    return api.upload<UploadImageResponse>("/wardrobe/upload-image", formData);
   },
 };

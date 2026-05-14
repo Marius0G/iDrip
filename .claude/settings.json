@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(stripe version 2>&1)",
+      "PowerShell(npm install -g stripe 2>&1)",
+      "PowerShell(stripe login 2>&1)",
+      "PowerShell($url = \"https://github.com/stripe/stripe/releases/latest/download/stripe_windows_x86_64.zip\"; $output = \"$env:TEMP\\\\stripe.zip\"; Invoke-WebRequest -Uri $url -OutFile $output; Expand-Archive -Path $output -DestinationPath \"$env:LOCALAPPDATA\\\\stripe-cli\" -Force; Write-Output \"Downloaded to $env:LOCALAPPDATA\\\\stripe-cli\")",
+      "WebFetch(domain:github.com)",
+      "PowerShell($url = \"https://github.com/stripe/stripe-cli/releases/download/v1.40.9/stripe_1.40.9_windows_x86_64.zip\"; $output = \"$env:TEMP\\\\stripe-cli.zip\"; Invoke-WebRequest -Uri $url -OutFile $output; Expand-Archive -Path $output -DestinationPath \"$env:LOCALAPPDATA\\\\stripe-cli\" -Force; Write-Output \"Done. Path: $env:LOCALAPPDATA\\\\stripe-cli\")",
+      "PowerShell(cd \"d:\\\\Proiecte\\\\iDrip\"; & \"$env:LOCALAPPDATA\\\\stripe-cli\\\\stripe.exe\" login --api-key sk_test_51T8OQo83PtApBr2ZXxdtjMgnzBT89fZfVorOSa3QmCArPWZ53zuDK95uLYZrmKtjZCrUuEp3Y1cGXItI9zUiJdXm00YDhuwXpm 2>&1)",
+      "PowerShell(cd \"d:\\\\Proiecte\\\\iDrip\"; & \"$env:LOCALAPPDATA\\\\stripe-cli\\\\stripe.exe\" config --set api_key \"sk_test_51T8OQo83PtApBr2ZXxdtjMgnzBT89fZfVorOSa3QmCArPWZ53zuDK95uLYZrmKtjZCrUuEp3Y1cGXItI9zUiJdXm00YDhuwXpm\" 2>&1)",
+      "PowerShell(New-Item -ItemType Directory -Force -Path \"$env:USERPROFILE\\\\.config\\\\stripe\"; & \"$env:LOCALAPPDATA\\\\stripe-cli\\\\stripe.exe\" config --set api_key \"sk_test_51T8OQo83PtApBr2ZXxdtjMgnzBT89fZfVorOSa3QmCArPWZ53zuDK95uLYZrmKtjZCrUuEp3Y1cGXItI9zUiJdXm00YDhuwXpm\" 2>&1)",
+      "PowerShell(cd \"d:\\\\Proiecte\\\\iDrip\"; & \"$env:LOCALAPPDATA\\\\stripe-cli\\\\stripe.exe\" webhook_endpoints create --url \"https://api.idrip.tech/api/subscriptions/webhook\" --enabled-events \"checkout.session.completed\" 2>&1)",
+      "PowerShell(heroku config:set STRIPE_WEBHOOK_SECRET=whsec_mdSzIhXptJLrKiwcrzzMsE1DfpIDPYAm --app idrip-backend 2>&1)",
+      "PowerShell(docker volume ls -q 2>&1)",
+      "PowerShell(curl -s http://localhost:5000/health 2>&1)",
+      "PowerShell(Invoke-RestMethod -Uri http://localhost:5000/health 2>&1)",
+      "PowerShell(Start-Sleep -Seconds 5; $response = Invoke-RestMethod -Uri http://localhost:5000/health; Write-Output \\($response | ConvertTo-Json\\) 2>&1)"
+    ]
+  }
+}

@@ -38,12 +38,17 @@ export default function OutfitGeneratorPage() {
   const latestReasoning = outfits[0]?.aiReasoning;
 
   return (
-    <PageContainer>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">Outfit Generator</h2>
-          <p className="text-sm text-muted-foreground mt-1">AI-powered outfit combinations</p>
-        </div>
+    <PageContainer noTopPadding>
+      <div className="mb-8">
+        <p className="text-overline mb-2">
+          AI STUDIO<span className="text-[hsl(var(--punctuation))]">.</span>
+        </p>
+        <h2 className="text-display text-4xl md:text-5xl text-[hsl(var(--peak))] mb-2">
+          Outfit Generator
+        </h2>
+        <p className="text-base text-muted-foreground">
+          AI-powered combinations<span className="text-[hsl(var(--punctuation))]">.</span>
+        </p>
       </div>
 
       {/* Tab bar */}
@@ -68,7 +73,7 @@ export default function OutfitGeneratorPage() {
         <div className="space-y-6">
           {/* Occasion selector */}
           <div>
-            <label className="text-sm font-medium mb-2 block">Occasion</label>
+            <label className="text-sm font-medium mb-2 block">Occasion<span className="text-[hsl(var(--punctuation))]">:</span></label>
             <div className="flex gap-2 flex-wrap">
               {OCCASION_OPTIONS.map((o) => (
                 <button key={o.value} onClick={() => setOccasion(o.value as OutfitOccasion)}
@@ -86,7 +91,7 @@ export default function OutfitGeneratorPage() {
 
           {/* Season selector */}
           <div>
-            <label className="text-sm font-medium mb-2 block">Season</label>
+            <label className="text-sm font-medium mb-2 block">Season<span className="text-[hsl(var(--punctuation))]">:</span></label>
             <div className="flex gap-2 flex-wrap">
               {SEASONS.map((s) => (
                 <button key={s.value} onClick={() => setSeason(s.value as Season)}

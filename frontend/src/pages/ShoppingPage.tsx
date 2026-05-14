@@ -15,10 +15,17 @@ export default function ShoppingPage() {
   const filtered = getFilteredRecommendations();
 
   return (
-    <PageContainer>
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold">Smart Shopping</h2>
-        <p className="text-sm text-muted-foreground mt-1">AI-powered recommendations for your wardrobe</p>
+    <PageContainer noTopPadding>
+      <div className="mb-8">
+        <p className="text-overline mb-2">
+          CURATED FOR YOU<span className="text-[hsl(var(--punctuation))]">.</span>
+        </p>
+        <h2 className="text-display text-4xl md:text-5xl text-[hsl(var(--peak))] mb-2">
+          Smart Shopping
+        </h2>
+        <p className="text-base text-muted-foreground">
+          AI-powered recommendations<span className="text-[hsl(var(--punctuation))]">.</span>
+        </p>
       </div>
 
       <div className="space-y-6">

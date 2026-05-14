@@ -28,12 +28,19 @@ export default function WardrobePage() {
   }, [setFilter]);
 
   return (
-    <PageContainer>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">My Wardrobe</h2>
-          <p className="text-sm text-muted-foreground mt-1">{items.length} items</p>
-        </div>
+    <PageContainer noTopPadding>
+      <div className="mb-8">
+        <p className="text-overline mb-2">
+          COLLECTION<span className="text-[hsl(var(--punctuation))]">.</span>
+        </p>
+        <h2 className="text-display text-4xl md:text-5xl text-[hsl(var(--peak))] mb-2">
+          My Wardrobe
+        </h2>
+        <p className="text-base text-muted-foreground">
+          {items.length} pieces curated<span className="text-[hsl(var(--punctuation))]">.</span>
+        </p>
+      </div>
+      <div className="flex items-center justify-end mb-6">
         <button onClick={() => setShowUpload(true)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[hsl(var(--glacier))] text-white text-sm font-medium hover:opacity-90 transition-opacity">
           <Plus className="w-4 h-4" /> Add Item
         </button>

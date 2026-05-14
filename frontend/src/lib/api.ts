@@ -8,9 +8,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
+
+  // Don't set Content-Type for FormData (browser sets it with boundary)
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -53,5 +57,8 @@ export const api = {
   },
   delete<T>(path: string): Promise<T> {
     return request<T>(path, { method: 'DELETE' });
+  },
+  upload<T>(path: string, formData: FormData): Promise<T> {
+    return request<T>(path, { method: 'POST', body: formData });
   },
 };

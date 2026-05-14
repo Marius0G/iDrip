@@ -67,17 +67,22 @@ export default function SubscriptionPage() {
   return (
     <div className="min-h-screen bg-snowdrift">
       {/* Header */}
-      <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-b border-black/[0.06] dark:border-white/[0.08]">
+      <div className="bg-[hsl(var(--frost)/0.7)] backdrop-blur-xl border-b border-[hsl(var(--border)/0.4)]">
         <div className="max-w-5xl mx-auto px-6 py-8 md:py-12">
           <Link
             to="/"
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
           >
             &larr; Back to iDrip
           </Link>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Choose Your Plan</h1>
-          <p className="mt-2 text-muted-foreground max-w-md">
-            Unlock the full power of AI-powered styling. Upgrade anytime, cancel anytime.
+          <p className="text-overline mb-2">
+            PRICING<span className="text-[hsl(var(--punctuation))]">.</span>
+          </p>
+          <h1 className="text-display text-4xl md:text-5xl text-[hsl(var(--peak))] mb-2">
+            Choose Your Plan
+          </h1>
+          <p className="text-base text-muted-foreground max-w-md">
+            Unlock the full power of AI-powered styling<span className="text-[hsl(var(--punctuation))]">.</span>
           </p>
         </div>
       </div>
@@ -102,7 +107,7 @@ export default function SubscriptionPage() {
 
         {/* Current plan banner (if authenticated and has paid plan) */}
         {isAuthenticated && currentTier !== 'free' && (
-          <div className="p-5 rounded-2xl bg-white/70 dark:bg-white/[0.06] backdrop-blur-xl border border-[hsl(var(--glacier)/0.3)]">
+          <div className="p-5 rounded-2xl bg-[hsl(var(--frost)/0.7)] backdrop-blur-xl border border-[hsl(var(--glacier)/0.3)]">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-3">
                 <Crown className="w-5 h-5 text-[hsl(var(--glacier))]" />
@@ -133,7 +138,7 @@ export default function SubscriptionPage() {
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="h-96 rounded-2xl bg-white/40 dark:bg-white/[0.03] animate-pulse"
+                className="h-96 rounded-2xl bg-[hsl(var(--frost)/0.4)] animate-pulse"
               />
             ))}
           </div>
@@ -156,11 +161,11 @@ export default function SubscriptionPage() {
         {/* Feature comparison */}
         <section>
           <h2 className="text-xl font-bold mb-6">Feature Comparison</h2>
-          <div className="rounded-2xl bg-white/70 dark:bg-white/[0.06] backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] overflow-hidden">
+          <div className="rounded-2xl bg-[hsl(var(--frost)/0.7)] backdrop-blur-xl border border-[hsl(var(--border)/0.4)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-black/[0.06] dark:border-white/[0.08]">
+                  <tr className="border-b border-[hsl(var(--border)/0.4)]">
                     <th className="text-left px-6 py-4 font-medium text-muted-foreground">Feature</th>
                     <th className="px-6 py-4 font-medium text-center">Free</th>
                     <th className="px-6 py-4 font-medium text-center">Pro</th>
@@ -243,8 +248,8 @@ function PlanCard({
       className={cn(
         'relative flex flex-col rounded-2xl p-6 transition-all duration-200',
         plan.highlighted
-          ? 'bg-white/90 dark:bg-white/[0.1] backdrop-blur-xl border-2 border-[hsl(var(--glacier))] shadow-lg shadow-[hsl(var(--glacier)/0.1)]'
-          : 'bg-white/70 dark:bg-white/[0.06] backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] hover:border-[hsl(var(--glacier)/0.3)]'
+          ? 'bg-[hsl(var(--frost)/0.9)] backdrop-blur-xl border-2 border-[hsl(var(--glacier))] shadow-lg shadow-[hsl(var(--glacier)/0.1)]'
+          : 'bg-[hsl(var(--frost)/0.7)] backdrop-blur-xl border border-[hsl(var(--border)/0.4)] hover:border-[hsl(var(--glacier)/0.3)]'
       )}
     >
       {plan.highlighted && (
@@ -349,7 +354,7 @@ function ComparisonRow({
   lifetime: React.ReactNode;
 }) {
   return (
-    <tr className="border-b border-black/[0.04] dark:border-white/[0.04]">
+    <tr className="border-b border-[hsl(var(--border)/0.3)]">
       <td className="px-6 py-3.5 text-muted-foreground">{label}</td>
       <td className="px-6 py-3.5 text-center">{free}</td>
       <td className="px-6 py-3.5 text-center bg-[hsl(var(--glacier)/0.04)]">{pro}</td>
@@ -360,7 +365,7 @@ function ComparisonRow({
 
 function FaqCard({ question, answer }: { question: string; answer: string }) {
   return (
-    <div className="p-5 rounded-2xl bg-white/70 dark:bg-white/[0.06] backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08]">
+    <div className="p-5 rounded-2xl bg-[hsl(var(--frost)/0.7)] backdrop-blur-xl border border-[hsl(var(--border)/0.4)]">
       <h3 className="text-sm font-semibold mb-2">{question}</h3>
       <p className="text-sm text-muted-foreground leading-relaxed">{answer}</p>
     </div>

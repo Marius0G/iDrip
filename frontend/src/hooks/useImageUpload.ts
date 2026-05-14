@@ -29,10 +29,12 @@ function resizeImage(file: File, maxSize: number = 400): Promise<string> {
 
 export function useImageUpload() {
   const [preview, setPreview] = useState<string | null>(null);
+  const [rawFile, setRawFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const processFile = useCallback(async (file: File): Promise<string> => {
     setIsProcessing(true);
+    setRawFile(file);
     try {
       const dataUrl = await resizeImage(file);
       setPreview(dataUrl);
@@ -42,7 +44,10 @@ export function useImageUpload() {
     }
   }, []);
 
-  const clearPreview = useCallback(() => setPreview(null), []);
+  const clearPreview = useCallback(() => {
+    setPreview(null);
+    setRawFile(null);
+  }, []);
 
-  return { preview, isProcessing, processFile, clearPreview };
+  return { preview, rawFile, isProcessing, processFile, clearPreview };
 }

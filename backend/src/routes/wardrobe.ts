@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import WardrobeItem from '../models/WardrobeItem';
 import { checkWardrobeLimit } from '../middleware/featureGate';
+import { handleUpload } from '../middleware/upload';
+import { uploadImage } from '../services/cloudinaryService';
 
 const router = Router();
 
@@ -10,7 +12,7 @@ router.get('/', async (req: Request, res: Response) => {
 
   const filter: Record<string, unknown> = { userId };
   if (category && category !== 'all') filter.category = category;
-  if (season && season !== 'all') filter.seasons = season;
+  if (season && season !== 'all') filter.season = season;
 
   const items = await WardrobeItem.find(filter).sort({ createdAt: -1 });
   res.json({ items, count: items.length });
@@ -20,6 +22,28 @@ router.get('/:id', async (req: Request, res: Response) => {
   const item = await WardrobeItem.findById(req.params.id);
   if (!item) { res.status(404).json({ error: 'Item not found' }); return; }
   res.json(item);
+});
+
+router.post('/upload-image', handleUpload, async (req: Request, res: Response) => {
+  console.log('[upload-image] Received request');
+
+  if (!req.file) {
+    console.log('[upload-image] ERROR: No file in request');
+    res.status(400).json({ error: 'No image file provided' });
+    return;
+  }
+
+  console.log(`[upload-image] File received: ${req.file.originalname} (${req.file.size} bytes, ${req.file.mimetype})`);
+
+  try {
+    console.log('[upload-image] Uploading to Cloudinary...');
+    const result = await uploadImage(req.file.buffer, req.file.originalname);
+    console.log(`[upload-image] SUCCESS: ${result.url}`);
+    res.json({ imageUrl: result.url, publicId: result.publicId });
+  } catch (err: any) {
+    console.error('[upload-image] Cloudinary error:', err.message);
+    res.status(500).json({ error: `Upload failed: ${err.message}` });
+  }
 });
 
 router.post('/', checkWardrobeLimit, async (req: Request, res: Response) => {
