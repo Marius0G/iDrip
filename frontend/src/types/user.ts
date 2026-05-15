@@ -8,12 +8,10 @@ export interface User {
   avatarUrl?: string;
   stylePreferences: StylePreference[];
   budget: BudgetSettings;
-  theme: "light" | "dark" | "system";
   createdAt: string;
 }
 
 export interface UserSettings {
   stylePreferences: StylePreference[];
   budget: BudgetSettings;
-  theme: "light" | "dark" | "system";
 }

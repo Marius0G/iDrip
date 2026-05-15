@@ -11,7 +11,6 @@ interface UserState {
   logout: () => void;
   updateStylePreferences: (styles: StylePreference[]) => void;
   updateBudget: (monthlyBudget: number) => void;
-  setTheme: (theme: "light" | "dark" | "system") => void;
   clearAllData: () => void;
 }
 
@@ -21,7 +20,6 @@ const emptyUser: User = {
   email: "",
   stylePreferences: [],
   budget: { monthlyBudget: 150, spent: 0, currency: "USD" },
-  theme: "system",
   createdAt: "",
 };
 
@@ -54,18 +52,6 @@ export const useUserStore = create<UserState>()(
             ? { ...state.user, budget: { ...state.user.budget, monthlyBudget } }
             : null,
         }));
-      },
-
-      setTheme: (theme) => {
-        set((state) => ({
-          user: state.user ? { ...state.user, theme } : null,
-        }));
-        if (theme === "dark") document.documentElement.classList.add("dark");
-        else if (theme === "light") document.documentElement.classList.remove("dark");
-        else {
-          const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          document.documentElement.classList.toggle("dark", prefersDark);
-        }
       },
 
       clearAllData: () => {

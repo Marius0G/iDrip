@@ -131,7 +131,7 @@ src/
 - Full design system reference: `DESIGN_SYSTEM.md` at project root (authoritative for all visual decisions)
 - Color tokens (HSL vars): `--background`, `--foreground`, `--primary`, `--secondary`, `--muted`, `--muted-foreground`, `--accent`, `--destructive`, `--border`, `--input`, `--ring` plus Alpine-specific: `--frost`, `--glacier`, `--peak`, `--punctuation`
 - Border radius token: `--radius` (default `0.5rem` — sharper for editorial feel); derived tokens via `calc()`
-- Font tokens: `--font-display: 'Citadel Script', 'Playfair Display', Georgia, serif` (hero headlines only, NOT logo); `--font-sans: 'Helvetica Now Display', 'DM Sans', 'Inter', system-ui` (logo, UI, body)
+- Font tokens (match the .pen webkit, loaded via Google Fonts in `index.html`): `--font-sans: 'Inter', system-ui, sans-serif` (logo, UI, body); `--font-display: 'Syne', 'Inter', system-ui, sans-serif` (accent headings, section titles — apply via `.font-display` or `.text-display` utility)
 - Glass pattern: `bg-[hsl(var(--frost)/0.7)] backdrop-blur-xl border border-[hsl(var(--border)/0.4)] shadow-[0_4px_24px_-2px_hsl(210_80%_60%/0.12)]` — all components use semantic tokens, not the old `bg-white/70 dark:bg-white/[0.06]` pattern
 - Active states: `bg-[hsl(var(--glacier))] text-white` — glacier blue
 - Danger/delete: `border-[hsl(var(--punctuation)/0.3)] text-[hsl(var(--punctuation))] hover:bg-[hsl(var(--punctuation)/0.06)]` — red punctuation token

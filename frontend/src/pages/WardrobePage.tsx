@@ -29,12 +29,15 @@ export default function WardrobePage() {
 
   return (
     <PageContainer>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-end justify-between mb-6 gap-4">
         <div>
-          <h2 className="text-2xl font-bold">My Wardrobe</h2>
-          <p className="text-sm text-muted-foreground mt-1">{items.length} items</p>
+          <p className="kit-overline">My</p>
+          <h2 className="kit-display text-3xl md:text-4xl mt-1.5">Wardrobe</h2>
+          <p className="text-sm kit-muted mt-2">
+            {items.length} {items.length === 1 ? "item" : "items"}
+          </p>
         </div>
-        <button onClick={() => setShowUpload(true)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[hsl(var(--glacier))] text-white text-sm font-medium hover:opacity-90 transition-opacity">
+        <button onClick={() => setShowUpload(true)} className="kit-btn-primary">
           <Plus className="w-4 h-4" /> Add Item
         </button>
       </div>

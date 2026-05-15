@@ -18,6 +18,7 @@ export default function DashboardPage() {
   const budget = useShoppingStore((s) => s.budget);
   const loadRecommendations = useShoppingStore((s) => s.loadRecommendations);
   const [showUpload, setShowUpload] = useState(false);
+  const [weekAgo] = useState(() => Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   useEffect(() => {
     loadItems();
@@ -26,16 +27,19 @@ export default function DashboardPage() {
   }, [loadItems, loadOutfits, loadRecommendations]);
 
   const remaining = budget.monthlyBudget - budget.spent;
-  const recentItems = items.filter((i) => {
-    const week = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    return new Date(i.createdAt).getTime() > week;
-  });
+  const recentItems = items.filter(
+    (i) => new Date(i.createdAt).getTime() > weekAgo
+  );
 
   return (
     <PageContainer>
       <div className="mb-8">
-        <h2 className="text-2xl font-bold">Welcome back, {user?.name?.split(" ")[0] || "User"}</h2>
-        <p className="text-sm text-muted-foreground mt-1">Here's your style overview</p>
+        <p className="kit-overline">Welcome back</p>
+        <h2 className="kit-display text-3xl md:text-4xl mt-2">
+          {user?.name?.split(" ")[0] || "User"}
+          <span className="kit-display ml-1 text-[hsl(var(--sidebar-accent))]">.</span>
+        </h2>
+        <p className="text-sm kit-muted mt-3">Here's your style overview</p>
       </div>
 
       {items.length === 0 ? (

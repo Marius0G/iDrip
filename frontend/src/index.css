@@ -1,102 +1,14 @@
 @import "tailwindcss";
 
-/* ─── Alpine Frost Design System ─── */
+/* ─── iDrip Design System ─── */
 
 /*
- * Font Strategy:
- *   Display: Citadel Script (self-hosted WOFF2/TTF) — headlines, logo, statement text
- *   Body:    Helvetica Now Display (self-hosted WOFF2/OTF) — UI, navigation, body copy
+ * Fonts (matches the .pen webkit):
+ *   Sans:    Inter — UI, body, headlines (weights 400/500/600/700/800)
+ *   Display: Syne — accent headings, section titles (weights 500/600/700/800)
  *
- * Fallback stack when self-hosted fonts aren't loaded:
- *   Display: 'Playfair Display' (Google Fonts) → Georgia serif
- *   Body:    'DM Sans' (Google Fonts) → Inter → system sans-serif
+ * Loaded via Google Fonts in index.html.
  */
-
-/* ─── Citadel Script (Display) ─── */
-@font-face {
-  font-family: 'Citadel Script';
-  src: url('/fonts/CitadelScript-Regular.woff2') format('woff2'),
-       url('/fonts/CitadelScript-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* ─── Helvetica Now Display (Body) ─── */
-@font-face {
-  font-family: 'Helvetica Now Display';
-  src: url('/fonts/HelveticaNowDisplay-Light.woff2') format('woff2'),
-       url('/fonts/HelveticaNowDisplay-Light.otf') format('opentype');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica Now Display';
-  src: url('/fonts/HelveticaNowDisplay-LightItalic.otf') format('opentype');
-  font-weight: 300;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica Now Display';
-  src: url('/fonts/HelveticaNowDisplay-Regular.woff2') format('woff2'),
-       url('/fonts/HelveticaNowDisplay-Regular.otf') format('opentype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica Now Display';
-  src: url('/fonts/HelveticaNowDisplay-RegularItalic.otf') format('opentype');
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica Now Display';
-  src: url('/fonts/HelveticaNowDisplay-Medium.otf') format('opentype');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica Now Display';
-  src: url('/fonts/HelveticaNowDisplay-MediumItalic.otf') format('opentype');
-  font-weight: 500;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica Now Display';
-  src: url('/fonts/HelveticaNowDisplay-Bold.woff2') format('woff2'),
-       url('/fonts/HelveticaNowDisplay-Bold.otf') format('opentype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica Now Display';
-  src: url('/fonts/HelveticaNowDisplay-BoldItalic.otf') format('opentype');
-  font-weight: 700;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica Now Display';
-  src: url('/fonts/HelveticaNowDisplay-Black.otf') format('opentype');
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
-}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -136,10 +48,9 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 16px);
 
-  /* ─── Typography ─── */
-  /* When you self-host Citadel Script + Helvetica Now Display, swap these: */
-  --font-display: 'Citadel Script', 'Playfair Display', Georgia, serif;
-  --font-sans: 'Helvetica Now Display', 'DM Sans', 'Helvetica Neue', Helvetica, system-ui, sans-serif;
+  /* ─── Typography — matches webkit ─── */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  --font-display: 'Syne', 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* ─── Shadows — cold, high-altitude ─── */
@@ -225,6 +136,20 @@
     --peak: 220 20% 18%;
     --punctuation: 355 85% 50%;
 
+    /* ─── Sidebar palette — mono + green accent (matches .pen kit) ─── */
+    --sidebar-surface: 0 0% 97%;
+    --sidebar-border: 0 0% 84%;
+    --sidebar-fg: 0 0% 6%;
+    --sidebar-fg-muted: 0 0% 38%;
+    --sidebar-hover: 0 0% 93%;
+    --sidebar-active-bg: 0 0% 6%;
+    --sidebar-active-fg: 0 0% 100%;
+    --sidebar-accent: 110 100% 54%;
+    --sidebar-danger: 0 72% 50%;
+
+    /* ─── Kit page background (matches .pen Landing Card light) ─── */
+    --kit-page-bg: 108 100% 95%;
+
     --radius: 0.5rem;
   }
 
@@ -254,6 +179,20 @@
     --glacier: 210 80% 48%;
     --peak: 210 12% 90%;
     --punctuation: 355 82% 56%;
+
+    /* ─── Sidebar palette (dark) ─── */
+    --sidebar-surface: 0 0% 4%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-fg: 0 0% 98%;
+    --sidebar-fg-muted: 0 0% 62%;
+    --sidebar-hover: 0 0% 10%;
+    --sidebar-active-bg: 0 0% 98%;
+    --sidebar-active-fg: 0 0% 6%;
+    --sidebar-accent: 110 100% 54%;
+    --sidebar-danger: 0 75% 60%;
+
+    /* ─── Kit page background (matches .pen Landing Dark Editorial) ─── */
+    --kit-page-bg: 0 0% 0%;
   }
 
   * {
@@ -273,6 +212,19 @@
     letter-spacing: -0.01em;
     line-height: 1.5;
   }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  /* Drizzy cap: black in light mode, white in dark mode */
+  .drizzy-cap-fill {
+    fill: #0a0a0a;
+  }
+  /* .dark .drizzy-cap-fill {
+    fill: #fafafa;
+  } */
 
   /* ─── Editorial typography base ─── */
   h1, h2, h3, h4 {
@@ -342,6 +294,396 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   Sidebar / Nav — shared across desktop sidebar, mobile bottom
+   nav, and mobile header. Same tokens, same item treatment.
+   ═══════════════════════════════════════════════════════════════ */
+
+@utility sidebar-shell {
+  background: hsl(var(--sidebar-surface) / 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-color: hsl(var(--sidebar-border) / 0.6);
+}
+
+@utility sidebar-divider {
+  height: 1px;
+  background: hsl(var(--sidebar-border) / 0.7);
+}
+
+@utility sidebar-brand-dot {
+  color: hsl(var(--sidebar-accent));
+}
+
+@utility sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 180ms ease, color 180ms ease;
+  color: hsl(var(--sidebar-fg-muted));
+  width: 100%;
+  text-align: left;
+}
+
+@utility sidebar-item-inactive {
+  color: hsl(var(--sidebar-fg-muted));
+  &:hover {
+    background: hsl(var(--sidebar-hover));
+    color: hsl(var(--sidebar-fg));
+  }
+}
+
+@utility sidebar-item-active {
+  background: hsl(var(--sidebar-active-bg));
+  color: hsl(var(--sidebar-active-fg));
+}
+
+@utility sidebar-item-danger {
+  color: hsl(var(--sidebar-fg-muted));
+  &:hover {
+    background: hsl(var(--sidebar-danger) / 0.1);
+    color: hsl(var(--sidebar-danger));
+  }
+}
+
+@utility sidebar-item-accent {
+  color: hsl(var(--sidebar-accent));
+  &:hover {
+    background: hsl(var(--sidebar-accent) / 0.1);
+    color: hsl(var(--sidebar-accent));
+  }
+}
+
+@utility sidebar-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: hsl(var(--sidebar-fg-muted));
+  transition: color 180ms ease;
+  position: relative;
+}
+
+@utility sidebar-tab-active {
+  color: hsl(var(--sidebar-accent));
+}
+
+@utility sidebar-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background: hsl(var(--sidebar-hover));
+  border: 1px solid hsl(var(--sidebar-border) / 0.8);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: hsl(var(--sidebar-fg));
+}
+
+@utility sidebar-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--sidebar-fg-muted));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Kit — shared surface/typography utilities mirroring the .pen
+   ═══════════════════════════════════════════════════════════════ */
+
+@utility kit-card {
+  background: hsl(var(--sidebar-hover));
+  border-radius: 0.75rem;
+  border: 0;
+  overflow: hidden;
+  transition: transform 180ms ease, background-color 180ms ease;
+  @apply mt-5;
+}
+
+@utility kit-card-outline {
+  background: hsl(var(--sidebar-surface));
+  border: 1px solid hsl(var(--sidebar-border) / 0.7);
+  border-radius: 0.75rem;
+  transition: transform 180ms ease, background-color 180ms ease;
+}
+
+@utility kit-thumb {
+  background: hsl(var(--sidebar-hover));
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+@utility kit-divider-line {
+  height: 1px;
+  background: hsl(var(--sidebar-border) / 0.6);
+}
+
+@utility kit-overline {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: hsl(var(--sidebar-fg-muted));
+}
+
+@utility kit-tag {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: hsl(var(--sidebar-fg-muted));
+}
+
+@utility kit-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  color: hsl(var(--sidebar-fg));
+}
+
+@utility kit-muted {
+  color: hsl(var(--sidebar-fg-muted));
+}
+
+@utility kit-strong {
+  color: hsl(var(--sidebar-fg));
+}
+
+@utility kit-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 0.75rem;
+  background: hsl(var(--sidebar-surface));
+  border: 1px solid hsl(var(--sidebar-border) / 0.7);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--sidebar-fg));
+}
+
+@utility kit-icon-box-accent {
+  background: hsl(var(--sidebar-accent));
+  border-color: hsl(var(--sidebar-accent));
+  color: hsl(var(--sidebar-active-fg));
+}
+
+@utility kit-icon-pill {
+  width: 40px;
+  height: 40px;
+  border-radius: 0.75rem;
+  background: hsl(var(--sidebar-surface));
+  border: 1px solid hsl(var(--sidebar-border) / 0.7);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--sidebar-fg));
+  transition: background-color 180ms ease;
+  &:hover {
+    background: hsl(var(--sidebar-hover));
+  }
+}
+
+@utility kit-badge-ai {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.75rem;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  background: hsl(var(--sidebar-accent));
+  color: #000;
+}
+
+@utility kit-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.125rem;
+  border-radius: 0.75rem;
+  font-size: 13px;
+  font-weight: 600;
+  background: hsl(var(--sidebar-accent));
+  color: #000;
+  transition: filter 180ms ease, transform 180ms ease;
+  &:hover {
+    filter: brightness(0.95);
+  }
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+@utility kit-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.125rem;
+  border-radius: 0.75rem;
+  font-size: 13px;
+  font-weight: 600;
+  background: transparent;
+  color: hsl(var(--sidebar-fg));
+  border: 1.5px solid hsl(var(--sidebar-border));
+  transition: background-color 180ms ease;
+  &:hover {
+    background: hsl(var(--sidebar-hover));
+  }
+}
+
+@utility kit-page-bg {
+  background: hsl(var(--kit-page-bg));
+}
+
+@utility kit-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.75rem;
+  font-size: 13px;
+  font-weight: 500;
+  background: transparent;
+  color: hsl(var(--sidebar-fg-muted));
+  border: 1px solid hsl(var(--sidebar-border));
+  transition: background-color 180ms ease, color 180ms ease,
+    border-color 180ms ease;
+  white-space: nowrap;
+  &:hover {
+    background: hsl(var(--sidebar-hover));
+    color: hsl(var(--sidebar-fg));
+  }
+}
+
+@utility kit-chip-active {
+  background: hsl(var(--sidebar-accent));
+  color: #000;
+  border-color: hsl(var(--sidebar-accent));
+  &:hover {
+    background: hsl(var(--sidebar-accent));
+    color: #000;
+    border-color: hsl(var(--sidebar-accent));
+  }
+}
+
+@utility kit-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.75rem;
+  background: hsl(var(--sidebar-surface));
+  border: 1px solid hsl(var(--sidebar-border));
+  color: hsl(var(--sidebar-fg));
+  font-size: 14px;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+  &::placeholder {
+    color: hsl(var(--sidebar-fg-muted));
+  }
+  &:focus {
+    outline: none;
+    border-color: hsl(var(--sidebar-fg) / 0.4);
+    box-shadow: 0 0 0 3px hsl(var(--sidebar-fg) / 0.08);
+  }
+}
+
+@utility kit-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 500;
+  background: hsl(var(--sidebar-hover));
+  color: hsl(var(--sidebar-fg-muted));
+}
+
+@utility kit-bubble {
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.75rem;
+  background: hsl(var(--sidebar-surface));
+  border: 1px solid hsl(var(--sidebar-border) / 0.7);
+  color: hsl(var(--sidebar-fg));
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@utility kit-top-accent {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: hsl(var(--sidebar-accent));
+  box-shadow: 0 2px 24px 0 hsl(var(--sidebar-accent) / 0.55);
+  z-index: 100;
+  pointer-events: none;
+}
+
+@utility scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+@utility carousel-edge-left {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 80px;
+  z-index: 10;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    hsl(var(--kit-page-bg)) 0%,
+    hsl(var(--kit-page-bg) / 0.6) 55%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(to right, black 0%, transparent 100%);
+  mask-image: linear-gradient(to right, black 0%, transparent 100%);
+  @apply backdrop-blur-sm;
+}
+
+@utility carousel-edge-right {
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+  width: 80px;
+  z-index: 10;
+  pointer-events: none;
+  background: linear-gradient(
+    to left,
+    hsl(var(--kit-page-bg)) 0%,
+    hsl(var(--kit-page-bg) / 0.6) 55%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(to left, black 0%, transparent 100%);
+  mask-image: linear-gradient(to left, black 0%, transparent 100%);
+  @apply backdrop-blur-sm;
+}
+
+/* ═══════════════════════════════════════════════════════════════
    Angular Geometry — Peak & Diagonal Utilities
    ═══════════════════════════════════════════════════════════════ */
 
@@ -399,7 +741,7 @@
    Typography Utilities
    ═══════════════════════════════════════════════════════════════ */
 
-/* Display headline — Citadel Script */
+/* Display headline — Syne */
 @utility text-display {
   font-family: var(--font-display);
   font-weight: 700;
@@ -416,6 +758,16 @@
   text-transform: uppercase;
   color: hsl(var(--muted-foreground));
 }
+
+/* Webkit-style fine print — for ToS/privacy/legal text under CTAs */
+@utility text-fine-print {
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  line-height: 1.35;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
 
 /* Red punctuation dot — for "iDrip." style branding */
 @utility dot-red {

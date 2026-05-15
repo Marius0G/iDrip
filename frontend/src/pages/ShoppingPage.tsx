@@ -17,32 +17,55 @@ export default function ShoppingPage() {
   return (
     <PageContainer>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold">Smart Shopping</h2>
-        <p className="text-sm text-muted-foreground mt-1">AI-powered recommendations for your wardrobe</p>
+        <p className="kit-overline">Smart</p>
+        <h2 className="kit-display text-3xl md:text-4xl mt-1.5">Shopping</h2>
+        <p className="text-sm kit-muted mt-2">
+          AI-powered recommendations for your wardrobe
+        </p>
       </div>
 
       <div className="space-y-6">
-        <BudgetSlider budget={budget.monthlyBudget} spent={budget.spent} currency={budget.currency} onChange={(v) => setBudget({ monthlyBudget: v })} />
+        <BudgetSlider
+          budget={budget.monthlyBudget}
+          spent={budget.spent}
+          currency={budget.currency}
+          onChange={(v) => setBudget({ monthlyBudget: v })}
+        />
 
         <div>
-          <h3 className="text-sm font-medium mb-2">Style Preferences</h3>
+          <label className="kit-overline block mb-2">Style Preferences</label>
           <StyleTagSelector selected={selectedStyles} onToggle={toggleStyle} />
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold">Recommendations</h3>
-            <span className="text-sm text-muted-foreground">{filtered.length} items</span>
+          <div className="flex items-end justify-between mb-3 gap-4">
+            <div>
+              <p className="kit-overline">For you</p>
+              <h3 className="kit-display text-2xl md:text-3xl mt-1.5">
+                Recommendations
+              </h3>
+            </div>
+            <span className="text-sm kit-muted">
+              {filtered.length} {filtered.length === 1 ? "item" : "items"}
+            </span>
           </div>
 
           {filtered.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filtered.map((rec) => (
-                <RecommendationCard key={rec.id} recommendation={rec} onDismiss={dismissRecommendation} />
+                <RecommendationCard
+                  key={rec.id}
+                  recommendation={rec}
+                  onDismiss={dismissRecommendation}
+                />
               ))}
             </div>
           ) : (
-            <EmptyState icon={ShoppingBag} title="No recommendations" description="Try adjusting your budget or style preferences" />
+            <EmptyState
+              icon={ShoppingBag}
+              title="No recommendations"
+              description="Try adjusting your budget or style preferences"
+            />
           )}
         </div>
       </div>

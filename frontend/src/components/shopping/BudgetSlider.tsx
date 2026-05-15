@@ -12,28 +12,31 @@ export function BudgetSlider({ budget, spent, onChange }: BudgetSliderProps) {
   const percentage = (spent / budget) * 100;
 
   return (
-    <div className="bg-[hsl(var(--frost)/0.7)] backdrop-blur-xl border border-[hsl(var(--border)/0.4)] rounded-2xl p-5 shadow-[0_4px_24px_-2px_hsl(210_80%_60%/0.12)] transition-all duration-300">
+    <div className="kit-card p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-muted-foreground" />
-          <span className="text-sm font-medium">Monthly Budget</span>
+          <div className="kit-icon-box" style={{ width: 32, height: 32 }}>
+            <DollarSign className="w-4 h-4" />
+          </div>
+          <span className="kit-overline">Monthly Budget</span>
         </div>
-        <span className="text-2xl font-bold">${remaining}</span>
+        <span className="kit-display text-2xl">${remaining}</span>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+      <div className="flex items-center justify-between text-xs kit-muted mb-2">
         <span>${spent} spent</span>
         <span>${budget} budget</span>
       </div>
 
-      {/* Progress bar */}
-      <div className="w-full h-2 rounded-full bg-[hsl(var(--frost))] mb-4 overflow-hidden">
-        <div className="h-full rounded-full bg-[hsl(var(--glacier))] transition-all duration-500" style={{ width: `${Math.min(percentage, 100)}%` }} />
+      <div className="w-full h-1.5 rounded-full bg-[hsl(var(--sidebar-surface))] mb-4 overflow-hidden border border-[hsl(var(--sidebar-border))]">
+        <div
+          className="h-full rounded-full bg-[hsl(var(--sidebar-accent))] transition-all duration-500"
+          style={{ width: `${Math.min(percentage, 100)}%` }}
+        />
       </div>
 
-      {/* Slider */}
       <div>
-        <label className="text-xs text-muted-foreground mb-1 block">Adjust budget</label>
+        <label className="kit-overline block mb-2">Adjust budget</label>
         <input
           type="range"
           min={50}
@@ -41,7 +44,7 @@ export function BudgetSlider({ budget, spent, onChange }: BudgetSliderProps) {
           step={10}
           value={budget}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full h-2 rounded-full appearance-none bg-[hsl(var(--border)/0.4)] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[hsl(var(--glacier))] [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer"
+          className="w-full h-1.5 rounded-full appearance-none bg-[hsl(var(--sidebar-border))] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[hsl(var(--sidebar-accent))] [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[hsl(var(--sidebar-accent))] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
         />
       </div>
     </div>
