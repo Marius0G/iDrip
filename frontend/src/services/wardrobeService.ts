@@ -11,8 +11,8 @@ interface UploadImageResponse {
   publicId: string;
 }
 
-// Re-export the analysis type from featherlessService for convenience
-export type { ClothingAnalysis } from "./featherlessService";
+// Re-export the analysis type from aiAnalysisService for convenience
+export type { ClothingAnalysis } from "./aiAnalysisService";
 
 export const wardrobeService = {
   async getAll(): Promise<ClothingItem[]> {

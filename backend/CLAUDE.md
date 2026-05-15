@@ -50,7 +50,8 @@ src/
 **Future Epics (not started):**
 - Epic 7: Authentication — `POST /api/auth/register`, `POST /api/auth/login`, JWT middleware, per-user scoping (currently hardcoded to demo user `alex@idrip.demo`)
 - Epic 8: AI Integration:
-  - US-8.2.1 `POST /api/ai/analyze-clothing` (5pts) — accepts `{ image: string }` base64 data URL, proxies to Python ai-service at `http://ai-service:8000/analyze`, 10s timeout, returns 503 if unavailable, rate-limited 10 req/min
+  - `POST /api/ai/analyze-clothing` (US-8.2.1) — accepts `{ imageUrl: string }`, analyzes image using OpenAI (gpt-4o) or fallback to Featherless, returns detailed clothing metadata.
+
   - US-8.2.2 Python ai-service (13pts) — Dockerized FastAPI service; LangGraph agent flow: Image Preprocessor → Vision Analyzer → Output Parser → Confidence Scorer; env vars: LLM_MODEL, LLM_API_KEY, LLM_BASE_URL; health check: `GET /health`
   - US-8.1 Real AI outfit gen (13pts) — replace random category picker with LLM
   - US-8.3 Real shopping recs (13pts) — live product data integration
@@ -71,7 +72,7 @@ src/
 - `GET|POST /api/outfits`, `POST /api/outfits/generate`, `PATCH /api/outfits/:id/save` — outfit management
 - `GET /api/recommendations` — shopping suggestions (mock data, filterable)
 - `GET /api/users/me`, `PUT /api/users/me/preferences` — demo user profile
-- `POST /api/ai/analyze-clothing` _(planned)_ — proxies image to Python ai-service; returns clothing metadata JSON
+- `POST /api/ai/analyze-clothing` — analyzes image using OpenAI or Featherless; returns clothing metadata JSON
 
 ### Data Model Notes
 - `WardrobeItem.category`: tops | bottoms | shoes | outerwear | accessories

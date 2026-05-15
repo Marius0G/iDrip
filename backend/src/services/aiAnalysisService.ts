@@ -1,10 +1,5 @@
 import axios from 'axios';
 
-// OpenAI takes priority if configured, falls back to Featherless
-const BASE_URL = process.env.OPENAI_BASE_URL || process.env.FEATHERLESS_BASE_URL || 'https://api.openai.com/v1';
-const MODEL = process.env.OPENAI_MODEL || process.env.FEATHERLESS_MODEL || 'gpt-4o';
-const API_KEY = process.env.OPENAI_API_KEY || process.env.FEATHERLESS_API_KEY;
-
 export interface ClothingAnalysis {
   name: string;
   category: string;
@@ -134,7 +129,7 @@ JSON schema to return:
   "confidence": <0.0 to 1.0 — your overall certainty in this analysis>
 }`;
 
-const MAX_RETRIES = 2;
+const MAX_RETRIES = 1;
 const INITIAL_RETRY_DELAY = 1000; // ms
 
 async function sleep(ms: number): Promise<void> {
@@ -198,77 +193,108 @@ function parseAnalysisFromContent(content: string): ClothingAnalysis {
   return sanitizeAnalysis(analysis);
 }
 
+interface ProviderConfig {
+  name: string;
+  apiKey: string | undefined;
+  baseUrl: string;
+  model: string;
+}
+
+async function callProvider(imageUrl: string, config: ProviderConfig): Promise<ClothingAnalysis> {
+  if (!config.apiKey) {
+    throw new Error(`API key for ${config.name} not configured`);
+  }
+
+  console.log(`[aiAnalysis] Calling ${config.name} (${config.model})`);
+  
+  const response = await axios.post(
+    `${config.baseUrl}/chat/completions`,
+    {
+      model: config.model,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Analyze this clothing item from the photo and return the JSON description.' },
+            { type: 'image_url', image_url: { url: imageUrl } },
+          ],
+        },
+      ],
+      temperature: 0.1,
+      max_tokens: 4096,
+      response_format: { type: 'json_object' },
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 60000,
+    }
+  );
+
+  const content = response.data?.choices?.[0]?.message?.content;
+  if (!content) {
+    throw new Error(`Empty response from ${config.name}`);
+  }
+
+  return parseAnalysisFromContent(content);
+}
+
 /**
- * Sends a clothing image to Featherless AI for analysis.
- * Featherless has an OpenAI-compatible API.
- * Includes retry logic for transient failures (cold starts, empty responses).
+ * Sends a clothing image to AI (OpenAI or Featherless) for analysis.
+ * Implements fallback: OpenAI first, then Featherless.
  */
 export async function analyzeClothing(imageUrl: string): Promise<ClothingAnalysis> {
-  if (!API_KEY) {
-    throw new Error('No AI API key configured — set OPENAI_API_KEY or FEATHERLESS_API_KEY');
-  }
+  const providers: ProviderConfig[] = [
+    {
+      name: 'OpenAI',
+      apiKey: process.env.OPENAI_API_KEY,
+      baseUrl: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+      model: process.env.OPENAI_MODEL || 'gpt-4o',
+    },
+    {
+      name: 'Featherless',
+      apiKey: process.env.FEATHERLESS_API_KEY,
+      baseUrl: process.env.FEATHERLESS_BASE_URL || 'https://api.featherless.ai/v1',
+      model: process.env.FEATHERLESS_MODEL || 'Qwen/Qwen3.6-27B',
+    }
+  ];
 
   let lastError: Error | null = null;
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      const response = await axios.post(
-        `${BASE_URL}/chat/completions`,
-        {
-          model: MODEL,
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: 'Analyze this clothing item from the photo and return the JSON description.' },
-                { type: 'image_url', image_url: { url: imageUrl } },
-              ],
-            },
-          ],
-          temperature: 0.1,
-          max_tokens: 4096,
-          response_format: { type: 'json_object' },
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 60000,
+  for (const provider of providers) {
+    if (!provider.apiKey) continue;
+
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        return await callProvider(imageUrl, provider);
+      } catch (err: any) {
+        lastError = err;
+        
+        // Don't retry/fallback on validation errors (the AI answered, but the format was wrong)
+        if (err.message?.startsWith('AI response missing')) {
+          throw err;
         }
-      );
 
-      const content = response.data?.choices?.[0]?.message?.content;
-      if (!content) {
-        throw new Error('Empty response from Featherless AI');
+        // Handle specific error codes
+        const status = err.response?.status;
+        if (status === 401) {
+          console.error(`[aiAnalysis] ${provider.name} auth error: Invalid API key`);
+          break; // Try next provider
+        }
+
+        if (attempt < MAX_RETRIES) {
+          const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
+          console.warn(`[aiAnalysis] ${provider.name} attempt ${attempt + 1} failed: ${err.message}. Retrying...`);
+          await sleep(delay);
+        } else {
+          console.error(`[aiAnalysis] ${provider.name} failed after ${MAX_RETRIES + 1} attempts. Falling back if possible.`);
+        }
       }
-
-      return parseAnalysisFromContent(content);
-    } catch (err: any) {
-      lastError = err;
-
-      // Don't retry configuration errors
-      if (err.message === 'FEATHERLESS_API_KEY is not configured') {
-        throw err;
-      }
-
-      // Don't retry if we got a valid response that just failed validation
-      if (err.message?.startsWith('AI response missing')) {
-        throw err;
-      }
-
-      // On last attempt, give up
-      if (attempt === MAX_RETRIES) {
-        break;
-      }
-
-      // Retry on timeout, empty response, or parse failures
-      const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
-      console.warn(`[featherless] Attempt ${attempt + 1} failed: ${err.message}. Retrying in ${delay}ms...`);
-      await sleep(delay);
     }
   }
 
-  throw lastError || new Error('Featherless AI analysis failed after all retries');
+  throw lastError || new Error('No AI provider configured — set OPENAI_API_KEY or FEATHERLESS_API_KEY');
 }

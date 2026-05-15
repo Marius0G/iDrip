@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.FEATHERLESS_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
 
 const EMBEDDING_MODEL = 'text-embedding-3-small';

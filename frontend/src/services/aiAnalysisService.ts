@@ -60,7 +60,7 @@ export interface ClothingAnalysis {
   [key: string]: unknown;
 }
 
-export const featherlessService = {
+export const aiAnalysisService = {
   async analyzeClothing(imageUrl: string): Promise<ClothingAnalysis> {
     return api.post<ClothingAnalysis>("/ai/analyze-clothing", { imageUrl });
   },

@@ -5,7 +5,7 @@ import { ImageUploader } from "@/components/shared/ImageUploader";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { useWardrobeStore } from "@/stores/useWardrobeStore";
 import { wardrobeService } from "@/services/wardrobeService";
-import { featherlessService, type ClothingAnalysis } from "@/services/featherlessService";
+import { aiAnalysisService, type ClothingAnalysis } from "@/services/aiAnalysisService";
 import { useAnimatedMount } from "@/hooks/useAnimatedMount";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { CLOTHING_CATEGORIES } from "@/data/categories";
@@ -107,7 +107,7 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
     try {
       const { imageUrl: url } = await wardrobeService.uploadImage(rawFile);
       setImageUrl(url);
-      const result = await featherlessService.analyzeClothing(url);
+      const result = await aiAnalysisService.analyzeClothing(url);
       setAnalysis(result);
       setCategory((result.category as ClothingCategory) || "tops");
       // Populate metadata from AI result

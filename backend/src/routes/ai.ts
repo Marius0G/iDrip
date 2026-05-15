@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { analyzeClothing } from '../services/featherlessService';
+import { analyzeClothing } from '../services/aiAnalysisService';
 
 const router = Router();
 
@@ -42,7 +42,7 @@ router.post('/analyze-clothing', checkRateLimit, async (req: Request, res: Respo
     console.log(`[analyze-clothing] SUCCESS: category=${analysis.category}, confidence=${analysis.confidence}`);
     res.json(analysis);
   } catch (err: any) {
-    if (err.message === 'No AI API key configured — set OPENAI_API_KEY or FEATHERLESS_API_KEY') {
+    if (err.message === 'No AI API key configured — set OPENAI_API_KEY') {
       console.log('[analyze-clothing] ERROR: API key not configured');
       res.status(503).json({ error: 'AI service is not configured' });
       return;
