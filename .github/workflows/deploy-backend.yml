@@ -20,6 +20,13 @@ jobs:
       - name: Install Heroku CLI
         run: curl https://cli-assets.heroku.com/install.sh | sh
 
+      - name: Set Heroku config vars
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          heroku config:set BACKEND_URL=https://api.idrip.tech -a ${{ secrets.HEROKU_BACKEND_APP }}
+          heroku config:set FRONTEND_URL=https://idrip.tech -a ${{ secrets.HEROKU_BACKEND_APP }}
+
       - name: Deploy to Heroku
         uses: akhileshns/heroku-deploy@v3.14.15
         with:

@@ -42,6 +42,8 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          VITE_API_URL: https://api.idrip.tech/api
 
       - name: Ensure Cloudflare Pages project exists
         continue-on-error: true
