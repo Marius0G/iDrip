@@ -13,11 +13,8 @@ export function GenerateButton({ onClick, isGenerating, disabled }: GenerateButt
       onClick={onClick}
       disabled={disabled || isGenerating}
       className={cn(
-        "w-full py-4 rounded-2xl text-sm font-semibold flex items-center justify-center gap-3 transition-all duration-300",
-        isGenerating
-          ? "bg-[hsl(var(--glacier)/0.8)] text-white"
-          : "bg-[hsl(var(--glacier))] text-white hover:opacity-90 hover:shadow-xl hover:scale-[1.01]",
-        "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+        "kit-btn-primary w-full py-3.5 text-sm",
+        "disabled:opacity-40 disabled:cursor-not-allowed"
       )}
     >
       {isGenerating ? (

@@ -82,7 +82,7 @@ export function ClothingDetailSheet({
       {/* Panel */}
       <div
         ref={panelRef}
-        className="relative w-full md:w-96 md:h-full max-h-[85vh] md:max-h-full overflow-y-auto bg-[hsl(var(--frost)/0.95)] backdrop-blur-2xl border-t md:border-l border-[hsl(var(--border)/0.4)] rounded-t-3xl md:rounded-none shadow-2xl"
+        className="relative w-full md:w-96 md:h-full max-h-[85vh] md:max-h-full overflow-y-auto bg-[hsl(var(--sidebar-surface))] backdrop-blur-2xl border-t md:border-l border-[hsl(var(--sidebar-border)/0.6)] rounded-t-3xl md:rounded-none shadow-2xl"
         style={{
           transform: panelTransform,
           transition: isAnimating
@@ -94,27 +94,30 @@ export function ClothingDetailSheet({
       >
         {/* Header — swipe handle */}
         <div
-          className="sticky top-0 bg-[hsl(var(--frost)/0.9)] backdrop-blur-xl z-10 p-4 flex items-center justify-between border-b border-[hsl(var(--border)/0.3)] touch-pan-y"
+          className="sticky top-0 bg-[hsl(var(--sidebar-surface)/0.92)] backdrop-blur-xl z-10 p-4 flex items-center justify-between border-b border-[hsl(var(--sidebar-border)/0.6)] touch-pan-y"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
           {/* Drag handle pill */}
-          <div className="md:hidden absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-[hsl(var(--border)/0.6)]" />
-          <h2 className="text-lg font-bold">Item Details</h2>
+          <div className="md:hidden absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-[hsl(var(--sidebar-border))]" />
+          <div>
+            <p className="kit-overline">Wardrobe</p>
+            <h2 className="font-display text-lg font-semibold kit-strong mt-0.5">Item Details</h2>
+          </div>
           <button
             onClick={() => {
               startExit();
               setTimeout(onClose, 300);
             }}
-            className="w-8 h-8 rounded-lg bg-[hsl(var(--frost))] flex items-center justify-center hover:bg-[hsl(var(--border)/0.3)] transition-colors"
+            className="w-8 h-8 rounded-lg bg-[hsl(var(--sidebar-hover))] border border-[hsl(var(--sidebar-border)/0.7)] flex items-center justify-center hover:bg-[hsl(var(--sidebar-border)/0.4)] transition-colors kit-strong"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="p-4 space-y-4">
-          <div className="rounded-2xl overflow-hidden">
+        <div className="p-4 space-y-5">
+          <div className="rounded-xl overflow-hidden bg-[hsl(var(--sidebar-hover))]">
             <img
               src={item.imageUrl}
               alt={item.name}
@@ -123,34 +126,39 @@ export function ClothingDetailSheet({
           </div>
 
           <div>
-            <h3 className="text-xl font-bold">{item.name}</h3>
+            <h3 className="font-display text-xl md:text-2xl font-semibold kit-strong">{item.name}</h3>
             {item.brand && (
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm kit-muted mt-1">
                 {item.brand}
               </p>
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-xl bg-[hsl(var(--frost))]">
-              <span className="text-xs text-muted-foreground">Category</span>
-              <p className="text-sm font-medium capitalize">
+          <div>
+            <span className="kit-overline">Category</span>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[hsl(var(--sidebar-accent))] text-black text-xs font-semibold capitalize">
                 {item.category}
-              </p>
-            </div>
-            <div className="p-3 rounded-xl bg-[hsl(var(--frost))]">
-              <span className="text-xs text-muted-foreground">Color</span>
-              <p className="text-sm font-medium capitalize">{item.color}</p>
+              </span>
             </div>
           </div>
 
           <div>
-            <span className="text-xs text-muted-foreground">Seasons</span>
-            <div className="flex flex-wrap gap-1 mt-1">
+            <span className="kit-overline">Color</span>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[hsl(var(--sidebar-accent))] text-black text-xs font-semibold capitalize">
+                {item.color}
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <span className="kit-overline">Seasons</span>
+            <div className="flex flex-wrap gap-1.5 mt-2">
               {item.season.map((s) => (
                 <span
                   key={s}
-                  className="px-2 py-1 rounded-lg bg-[hsl(var(--frost))] text-xs font-medium capitalize"
+                  className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[hsl(var(--sidebar-accent))] text-black text-xs font-semibold capitalize"
                 >
                   {s}
                 </span>
@@ -160,12 +168,12 @@ export function ClothingDetailSheet({
 
           {item.tags.length > 0 && (
             <div>
-              <span className="text-xs text-muted-foreground">Tags</span>
-              <div className="flex flex-wrap gap-1 mt-1">
+              <span className="kit-overline">Tags</span>
+              <div className="flex flex-wrap gap-1.5 mt-2">
                 {item.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="px-2 py-1 rounded-lg bg-[hsl(var(--frost))] text-xs font-medium capitalize"
+                    className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[hsl(var(--sidebar-accent))] text-black text-xs font-semibold capitalize"
                   >
                     {tag}
                   </span>
@@ -174,12 +182,24 @@ export function ClothingDetailSheet({
             </div>
           )}
 
-          <button
-            onClick={handleDelete}
-            className="w-full py-3 rounded-2xl border border-[hsl(var(--punctuation)/0.3)] text-[hsl(var(--punctuation))] text-sm font-medium flex items-center justify-center gap-2 hover:bg-[hsl(var(--punctuation)/0.06)] transition-colors"
-          >
-            <Trash2 className="w-4 h-4" /> Remove from Wardrobe
-          </button>
+          <div className="mt-2 rounded-xl p-4 border border-[hsl(var(--sidebar-danger)/0.4)] bg-[hsl(var(--sidebar-danger)/0.05)]">
+            <div className="flex flex-col gap-3">
+              <div className="min-w-0">
+                <h3 className="kit-overline" style={{ color: "hsl(var(--sidebar-danger))" }}>
+                  Danger Zone
+                </h3>
+                <p className="text-xs kit-muted mt-2">
+                  This will permanently remove this item from your wardrobe.
+                </p>
+              </div>
+              <button
+                onClick={handleDelete}
+                className="self-start inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors border-[hsl(var(--sidebar-danger)/0.4)] text-[hsl(var(--sidebar-danger))] hover:bg-[hsl(var(--sidebar-danger)/0.1)]"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Remove Item
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

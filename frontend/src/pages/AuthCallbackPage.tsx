@@ -39,7 +39,6 @@ export default function AuthCallbackPage() {
         name: payload.name,
         stylePreferences: [],
         budget: { monthlyBudget: 150, spent: 0, currency: 'USD' },
-        theme: 'system' as const,
         createdAt: new Date().toISOString(),
       });
 
@@ -47,6 +46,7 @@ export default function AuthCallbackPage() {
     } catch {
       navigate('/login?error=no_token', { replace: true });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

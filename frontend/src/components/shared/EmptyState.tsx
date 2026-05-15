@@ -9,16 +9,32 @@ interface EmptyStateProps {
   className?: string;
 }
 
-export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
+export function EmptyState({
+  icon: Icon,
+  title,
+  description,
+  action,
+  className,
+}: EmptyStateProps) {
   return (
-    <div className={cn("flex flex-col items-center justify-center py-16 px-4 text-center", className)}>
-      <div className="w-16 h-16 rounded-2xl bg-[hsl(var(--frost))] flex items-center justify-center mb-4">
-        <Icon className="w-8 h-8 text-muted-foreground" />
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center py-16 px-4 text-center",
+        className
+      )}
+    >
+      <div
+        className="kit-icon-box kit-icon-box-accent mb-4"
+        style={{ width: 64, height: 64, borderRadius: 16 }}
+      >
+        <Icon className="w-7 h-7" />
       </div>
-      <h3 className="text-lg font-semibold mb-2">{title}</h3>
-      <p className="text-sm text-muted-foreground max-w-sm mb-6">{description}</p>
+      <h3 className="font-display text-xl font-semibold kit-strong mb-2">
+        {title}
+      </h3>
+      <p className="text-sm kit-muted max-w-sm mb-6">{description}</p>
       {action && (
-        <button onClick={action.onClick} className="px-6 py-2.5 rounded-xl bg-[hsl(var(--glacier))] text-white text-sm font-medium hover:opacity-90 transition-opacity">
+        <button onClick={action.onClick} className="kit-btn-primary">
           {action.label}
         </button>
       )}

@@ -7,6 +7,7 @@ interface StatCardProps {
   value: string | number;
   subtitle?: string;
   className?: string;
+  accent?: boolean;
 }
 
 export function StatCard({
@@ -15,26 +16,20 @@ export function StatCard({
   value,
   subtitle,
   className,
+  accent = false,
 }: StatCardProps) {
   return (
-    <div
-      className={cn(
-        "bg-[hsl(var(--frost)/0.7)] backdrop-blur-xl border border-[hsl(var(--border)/0.5)] rounded-2xl p-5 shadow-[0_4px_24px_-2px_hsl(210_80%_60%/0.12)] transition-all duration-300 hover:border-[hsl(var(--glacier)/0.3)] hover:shadow-[0_8px_32px_-4px_hsl(210_90%_40%/0.15)]",
-        className
-      )}
-    >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-overline">{label}</p>
-          <p className="text-3xl font-bold mt-1 text-[hsl(var(--peak))]">
-            {value}
-          </p>
+    <div className={cn("kit-card p-5", className)}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="kit-overline">{label}</p>
+          <p className="kit-display text-3xl mt-2.5 truncate">{value}</p>
           {subtitle && (
-            <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+            <p className="text-xs kit-muted mt-1">{subtitle}</p>
           )}
         </div>
-        <div className="w-10 h-10 rounded-xl bg-[hsl(var(--glacier)/0.1)] flex items-center justify-center">
-          <Icon className="w-5 h-5 text-[hsl(var(--glacier))]" />
+        <div className={cn("kit-icon-box flex-shrink-0", accent && "kit-icon-box-accent")}>
+          <Icon className="w-[18px] h-[18px]" />
         </div>
       </div>
     </div>

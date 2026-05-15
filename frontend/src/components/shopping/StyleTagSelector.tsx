@@ -10,16 +10,19 @@ interface StyleTagSelectorProps {
 
 export function StyleTagSelector({ selected, onToggle, className }: StyleTagSelectorProps) {
   return (
-    <div className={cn("flex flex-wrap gap-2", className)}>
+    <div
+      className={cn(
+        "flex gap-2 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 md:flex-wrap md:overflow-visible md:pb-0 md:mx-0 md:px-0",
+        className
+      )}
+    >
       {STYLE_OPTIONS.map((style) => (
         <button
           key={style.value}
           onClick={() => onToggle(style.value as StylePreference)}
           className={cn(
-            "px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border",
-            selected.includes(style.value as StylePreference)
-              ? "bg-[hsl(var(--glacier))] text-white border-transparent shadow-md"
-              : "bg-[hsl(var(--frost)/0.5)] text-muted-foreground border-[hsl(var(--border)/0.4)] hover:bg-[hsl(var(--frost))]"
+            "kit-chip flex-shrink-0",
+            selected.includes(style.value as StylePreference) && "kit-chip-active"
           )}
         >
           {style.label}

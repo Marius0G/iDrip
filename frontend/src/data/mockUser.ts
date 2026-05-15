@@ -10,6 +10,5 @@ export const mockUser: User = {
     spent: 45,
     currency: "USD",
   },
-  theme: "light",
   createdAt: "2024-01-01T00:00:00Z",
 };

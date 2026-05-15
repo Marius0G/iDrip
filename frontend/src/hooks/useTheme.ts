@@ -1,19 +1,17 @@
 import { useEffect } from "react";
-import { useUserStore } from "@/stores/useUserStore";
+import { useThemeStore } from "@/stores/useThemeStore";
 
 export function useTheme() {
-  const theme = useUserStore((s) => s.user?.theme ?? "system");
-  const setTheme = useUserStore((s) => s.setTheme);
+  const theme = useThemeStore((s) => s.theme);
+  const setTheme = useThemeStore((s) => s.setTheme);
 
   useEffect(() => {
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else if (theme === "light") {
-      document.documentElement.classList.remove("dark");
-    } else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      document.documentElement.classList.toggle("dark", prefersDark);
-    }
+    if (theme !== "system") return;
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = () =>
+      document.documentElement.classList.toggle("dark", mql.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
   }, [theme]);
 
   return { theme, setTheme };

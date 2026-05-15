@@ -1,17 +1,45 @@
 import { useEffect, useState, useCallback } from "react";
-import { Wand2, Layers } from "lucide-react";
+import {
+  Wand2,
+  Layers,
+  Flower,
+  Sun,
+  Leaf,
+  Snowflake,
+  Coffee,
+  Briefcase,
+  Crown,
+  Heart,
+  Dumbbell,
+  Plane,
+} from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { OutfitBuilder } from "@/components/outfit/OutfitBuilder";
 import { GenerateButton } from "@/components/outfit/GenerateButton";
 import { OutfitGrid } from "@/components/outfit/OutfitGrid";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { OptionWheel, type WheelOption } from "@/components/shared/OptionWheel";
 import { useOutfitStore } from "@/stores/useOutfitStore";
 import { useWardrobeStore } from "@/stores/useWardrobeStore";
-import { OCCASION_OPTIONS } from "@/data/styles";
-import { SEASONS } from "@/data/categories";
 import { cn } from "@/lib/utils";
 import type { OutfitOccasion, OutfitSlotKey } from "@/types/outfit";
 import type { Season } from "@/types/wardrobe";
+
+const OCCASION_WHEEL: WheelOption<OutfitOccasion>[] = [
+  { value: "casual", label: "Casual", Icon: Coffee },
+  { value: "work", label: "Work", Icon: Briefcase },
+  { value: "formal", label: "Formal", Icon: Crown },
+  { value: "date", label: "Date", Icon: Heart },
+  { value: "sport", label: "Sport", Icon: Dumbbell },
+  { value: "travel", label: "Travel", Icon: Plane },
+];
+
+const SEASON_WHEEL: WheelOption<Season>[] = [
+  { value: "spring", label: "Spring", Icon: Flower },
+  { value: "summer", label: "Summer", Icon: Sun },
+  { value: "fall", label: "Fall", Icon: Leaf },
+  { value: "winter", label: "Winter", Icon: Snowflake },
+];
 
 export default function OutfitGeneratorPage() {
   const { outfits, currentBuild, isGenerating, loadOutfits, generateOutfit, deleteOutfit } = useOutfitStore();
@@ -39,90 +67,75 @@ export default function OutfitGeneratorPage() {
 
   return (
     <PageContainer>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">Outfit Generator</h2>
-          <p className="text-sm text-muted-foreground mt-1">AI-powered outfit combinations</p>
-        </div>
+      <div className="mb-6">
+        <p className="kit-overline">Outfit</p>
+        <h2 className="kit-display text-3xl md:text-4xl mt-1.5">Generator</h2>
+        <p className="text-sm kit-muted mt-2">AI-powered outfit combos</p>
       </div>
 
-      {/* Tab bar */}
-      <div className="flex gap-1 p-1 rounded-xl bg-[hsl(var(--frost))] mb-6 w-fit">
+      <div className="grid grid-cols-2 gap-2 mb-6 md:flex md:w-fit">
         {[
           { key: "builder" as const, label: "Builder" },
           { key: "saved" as const, label: `Saved (${outfits.length})` },
         ].map((tab) => (
-          <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
             className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              activeTab === tab.key
-                ? "bg-[hsl(var(--frost)/0.9)] shadow-sm text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}>
+              "kit-chip justify-center w-full md:w-auto",
+              activeTab === tab.key && "kit-chip-active"
+            )}
+          >
             {tab.label}
           </button>
         ))}
       </div>
 
       {activeTab === "builder" ? (
-        <div className="space-y-6">
-          {/* Occasion selector */}
-          <div>
-            <label className="text-sm font-medium mb-2 block">Occasion</label>
-            <div className="flex gap-2 flex-wrap">
-              {OCCASION_OPTIONS.map((o) => (
-                <button key={o.value} onClick={() => setOccasion(o.value as OutfitOccasion)}
-                  className={cn(
-                    "px-4 py-2 rounded-xl text-sm font-medium transition-all border",
-                    occasion === o.value
-                      ? "bg-[hsl(var(--glacier))] text-white border-transparent"
-                      : "bg-[hsl(var(--frost)/0.5)] text-muted-foreground border-[hsl(var(--border)/0.4)] hover:bg-[hsl(var(--frost))]"
-                  )}>
-                  {o.label}
-                </button>
-              ))}
+        <div className="space-y-8">
+          <div className="grid gap-8 md:grid-cols-2 md:items-start">
+            <div className="flex flex-col items-center gap-3">
+              <p className="kit-overline self-center">Occasion</p>
+              <OptionWheel
+                options={OCCASION_WHEEL}
+                value={occasion}
+                onChange={(v) => setOccasion(v)}
+                size={280}
+              />
+            </div>
+
+            <div className="flex flex-col items-center gap-3">
+              <p className="kit-overline self-center">Season</p>
+              <OptionWheel
+                options={SEASON_WHEEL}
+                value={season}
+                onChange={setSeason}
+                center={{ value: "all", label: "All" }}
+                size={260}
+              />
             </div>
           </div>
 
-          {/* Season selector */}
-          <div>
-            <label className="text-sm font-medium mb-2 block">Season</label>
-            <div className="flex gap-2 flex-wrap">
-              {SEASONS.map((s) => (
-                <button key={s.value} onClick={() => setSeason(s.value as Season)}
-                  className={cn(
-                    "px-4 py-2 rounded-xl text-sm font-medium transition-all border",
-                    season === s.value
-                      ? "bg-[hsl(var(--glacier))] text-white border-transparent"
-                      : "bg-[hsl(var(--frost)/0.5)] text-muted-foreground border-[hsl(var(--border)/0.4)] hover:bg-[hsl(var(--frost))]"
-                  )}>
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Outfit Builder Slots */}
           <OutfitBuilder currentBuild={currentBuild} onSlotClick={handleSlotClick} isGenerating={isGenerating} />
 
-          {/* AI Reasoning */}
           {currentBuild.top && !isGenerating && (
-            <div className="bg-[hsl(var(--frost)/0.7)] backdrop-blur-xl border border-[hsl(var(--border)/0.4)] rounded-2xl p-4 shadow-[0_4px_24px_-2px_hsl(210_80%_60%/0.12)]">
+            <div className="kit-card p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Wand2 className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium">AI Reasoning</span>
+                <Wand2 className="w-4 h-4 text-[hsl(var(--sidebar-accent))]" />
+                <span className="kit-overline">AI Reasoning</span>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-sm kit-muted leading-relaxed">
                 {latestReasoning || "Generate an outfit to see AI reasoning."}
               </p>
             </div>
           )}
 
-          {/* Generate button */}
           <GenerateButton onClick={handleGenerate} isGenerating={isGenerating} disabled={!hasEnoughItems} />
 
           {!hasEnoughItems && (
-            <p className="text-xs text-muted-foreground text-center">Add at least 1 top, 1 bottom, and 1 pair of shoes to generate outfits.</p>
+            <p className="text-xs kit-muted text-center">
+              Add at least 1 top, 1 bottom, and 1 pair of shoes to generate outfits.
+            </p>
           )}
         </div>
       ) : (
