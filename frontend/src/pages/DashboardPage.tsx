@@ -13,12 +13,6 @@ import { useShoppingStore } from "@/stores/useShoppingStore";
 
 const hour = new Date().getHours();
 const timeOfDay = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
-const editionOverline =
-  hour < 12
-    ? "MORNING EDITION"
-    : hour < 17
-      ? "AFTERNOON EDITION"
-      : "EVENING EDITION";
 
 export default function DashboardPage() {
   const { items, loadItems } = useWardrobeStore();

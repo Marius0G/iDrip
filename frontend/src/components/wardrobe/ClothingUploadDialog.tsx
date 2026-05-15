@@ -191,13 +191,9 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
         lensColor: "",
         lining: "",
         publicId: "",
-        color: "other",
-        brand: "",
-        tags: [],
         imageUrl: imageUrl || "",
         // Override with metadata (user's edits)
         ...metadata,
-        category,
         color: (metadata.primaryColor as string) || "other",
         brand: (metadata.brand as string) || "",
         tags: (metadata.tags as string[]) || [],

@@ -12,7 +12,11 @@
       "Bash(curl -s -X POST http://localhost:8000/generate-outfit -H \"Content-Type: application/json\" -d \"{\\\\\"user_id\\\\\":\\\\\"test\\\\\",\\\\\"preferences\\\\\":{\\\\\"occasion\\\\\":\\\\\"casual\\\\\"},\\\\\"wardrobe_items\\\\\":[{\\\\\"id\\\\\":\\\\\"a1\\\\\",\\\\\"name\\\\\":\\\\\"White T-Shirt\\\\\",\\\\\"category\\\\\":\\\\\"tops\\\\\",\\\\\"primaryColor\\\\\":\\\\\"#ffffff\\\\\",\\\\\"formality\\\\\":2,\\\\\"style\\\\\":[\\\\\"minimalist\\\\\"],\\\\\"season\\\\\":[\\\\\"summer\\\\\"],\\\\\"material\\\\\":\\\\\"cotton\\\\\"},{\\\\\"id\\\\\":\\\\\"b1\\\\\",\\\\\"name\\\\\":\\\\\"Black Jeans\\\\\",\\\\\"category\\\\\":\\\\\"bottoms\\\\\",\\\\\"primaryColor\\\\\":\\\\\"#1a1a1a\\\\\",\\\\\"formality\\\\\":3,\\\\\"style\\\\\":[\\\\\"minimalist\\\\\"],\\\\\"season\\\\\":[\\\\\"all\\\\\"],\\\\\"material\\\\\":\\\\\"denim\\\\\"},{\\\\\"id\\\\\":\\\\\"s1\\\\\",\\\\\"name\\\\\":\\\\\"White Sneakers\\\\\",\\\\\"category\\\\\":\\\\\"shoes\\\\\",\\\\\"primaryColor\\\\\":\\\\\"#f5f5f5\\\\\",\\\\\"formality\\\\\":2,\\\\\"style\\\\\":[\\\\\"minimalist\\\\\"],\\\\\"season\\\\\":[\\\\\"summer\\\\\"]}]}\")",
       "Bash(Get-Content d:\\\\Proiecte\\\\iDrip\\\\backend\\\\.env)",
       "Bash(Select-String -Pattern \"STRIPE_SECRET|OPENAI_API_KEY\")",
-      "Bash(docker-compose exec *)"
+      "Bash(docker-compose exec *)",
+      "Bash(git diff *)",
+      "Bash(git add *)",
+      "Bash(Select-Object -First 30)",
+      "Bash(npx eslint *)"
     ]
   }
 }

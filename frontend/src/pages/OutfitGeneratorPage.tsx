@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Wand2, Layers, Sparkles, Flower, Sun, Leaf, Snowflake, Coffee, Briefcase, Crown, Heart, Dumbbell, Plane } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { OutfitBuilder } from "@/components/outfit/OutfitBuilder";
@@ -56,12 +56,12 @@ export default function OutfitGeneratorPage() {
     loadOutfits();
   }, [loadItems, loadOutfits]);
 
-  const currentParams = {
+  const currentParams = useMemo(() => ({
     occasion: occasion || undefined,
     weather: weather || undefined,
     season: season !== "all" ? season : undefined,
     free_text: freeText || undefined,
-  };
+  }), [occasion, weather, season, freeText]);
 
   const handleGenerate = useCallback(async () => {
     if (items.length < 3) return;
@@ -70,7 +70,7 @@ export default function OutfitGeneratorPage() {
     } catch (_) {
       // Error is set in the store
     }
-  }, [items, generateOutfit, occasion, weather, season, freeText]);
+  }, [items, generateOutfit, currentParams]);
 
   const handleSurpriseMe = useCallback(async () => {
     setOccasion("casual");
@@ -101,7 +101,7 @@ export default function OutfitGeneratorPage() {
         // Error is set in the store
       }
     },
-    [regenerateOutfit, occasion, weather, season, freeText]
+    [regenerateOutfit, currentParams]
   );
 
   const handleSlotClick = useCallback((_slot: OutfitSlotKey) => {

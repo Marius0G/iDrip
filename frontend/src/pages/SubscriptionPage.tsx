@@ -70,7 +70,7 @@ export default function SubscriptionPage() {
         <div className="max-w-6xl mx-auto px-6 py-10 md:py-14">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider kit-muted hover:kit-strong transition-colors mb-5
+            className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider kit-muted hover:kit-strong transition-colors mb-5"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back to iDrip
           </Link>

@@ -360,6 +360,9 @@ export function ClothingDetailSheet({ item, onClose, onEdit }: ClothingDetailShe
                   />
                 </div>
                 <span className="text-sm font-medium">{Math.round(item.aiConfidence * 100)}%</span>
+              </div>
+            </div>
+          )}
 
           <div className="mt-2 rounded-xl p-4 border border-[hsl(var(--sidebar-danger)/0.4)] bg-[hsl(var(--sidebar-danger)/0.05)]">
             <div className="flex flex-col gap-3">
