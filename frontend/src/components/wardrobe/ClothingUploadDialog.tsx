@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { X, Sparkles, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { X, Sparkles, AlertTriangle, ChevronDown, ChevronUp, Check, EyeOff, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ImageUploader } from "@/components/shared/ImageUploader";
 import { useImageUpload } from "@/hooks/useImageUpload";
@@ -12,17 +12,26 @@ import { CLOTHING_CATEGORIES } from "@/data/categories";
 import { CATEGORY_FIELD_GROUPS, FIELD_ENUMS, MULTI_SELECT_FIELDS, TEXT_FIELDS } from "@/lib/fieldConfig";
 import type { ClothingCategory, ClothingItemInput } from "@/types/wardrobe";
 
-type DialogState = "select" | "analyzing" | "review" | "saving";
+type DialogState = "collecting" | "analyzing" | "reviewing" | "saving";
+
+type ItemStatus = "queued" | "analyzing" | "analyzed" | "error" | "approved";
+
+interface BatchItem {
+  id: string;
+  file: File;
+  preview: string;
+  imageUrl: string | null;
+  analysis: ClothingAnalysis | null;
+  metadata: Record<string, unknown>;
+  category: ClothingCategory;
+  error: string | null;
+  status: ItemStatus;
+  collapsed: boolean;
+}
 
 interface ClothingUploadDialogProps {
   open: boolean;
   onClose: () => void;
-}
-
-function SkeletonField() {
-  return (
-    <div className="h-10 rounded-xl bg-[hsl(var(--frost)/0.4)] animate-pulse" />
-  );
 }
 
 function MultiSelectPills({
@@ -35,13 +44,9 @@ function MultiSelectPills({
   options: { value: string; label: string }[];
 }) {
   const toggle = (v: string) => {
-    if (values.includes(v)) {
-      onChange(values.filter((x) => x !== v));
-    } else {
-      onChange([...values, v]);
-    }
+    if (values.includes(v)) onChange(values.filter((x) => x !== v));
+    else onChange([...values, v]);
   };
-
   return (
     <div className="flex flex-wrap gap-1.5">
       {options.map((opt) => (
@@ -69,182 +74,251 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
 
   const wrappedClose = useCallback(() => { startExit(); setTimeout(onClose, 300); }, [startExit, onClose]);
   const addItem = useWardrobeStore((s) => s.addItem);
-  const { preview, rawFile, isProcessing, processFile, clearPreview } = useImageUpload();
+  const { previews, addFiles, removeFile, clearAll, isProcessing } = useImageUpload();
 
-  const [state, setState] = useState<DialogState>("select");
+  const [dialogState, setDialogState] = useState<DialogState>("collecting");
+  const [items, setItems] = useState<BatchItem[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [analysis, setAnalysis] = useState<ClothingAnalysis | null>(null);
-  const [metadata, setMetadata] = useState<Record<string, unknown>>({});
-  const [category, setCategory] = useState<ClothingCategory>("tops");
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
-
-  const toggleSection = (group: string) => {
-    setCollapsedSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(group)) next.delete(group);
-      else next.add(group);
-      return next;
-    });
-  };
+  const [savingProgress, setSavingProgress] = useState({ done: 0, total: 0 });
 
   const resetForm = useCallback(() => {
-    setState("select");
+    setDialogState("collecting");
     setError(null);
-    setImageUrl(null);
-    setAnalysis(null);
-    setMetadata({});
-    setCategory("tops");
-    setCollapsedSections(new Set());
-    clearPreview();
-  }, [clearPreview]);
+    setItems([]);
+    setSavingProgress({ done: 0, total: 0 });
+    clearAll();
+  }, [clearAll]);
 
-  // State 2 → 3: Upload image, then analyze
-  const handleAnalyze = useCallback(async () => {
-    if (!rawFile) return;
-    setState("analyzing");
+  // ── Add files to batch ──
+  const handleFilesSelected = useCallback(async (files: File[]) => {
     setError(null);
-    try {
-      const { imageUrl: url } = await wardrobeService.uploadImage(rawFile);
-      setImageUrl(url);
-      const result = await aiAnalysisService.analyzeClothing(url);
-      setAnalysis(result);
-      setCategory((result.category as ClothingCategory) || "tops");
-      // Populate metadata from AI result
-      const initial: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(result)) {
-        if (value !== null && value !== undefined) {
-          initial[key] = value;
+    const dataUrls = await addFiles(files);
+    const newItems: BatchItem[] = files.map((file, i) => ({
+      id: crypto.randomUUID(),
+      file,
+      preview: dataUrls[i],
+      imageUrl: null,
+      analysis: null,
+      metadata: {},
+      category: "tops" as ClothingCategory,
+      error: null,
+      status: "queued" as ItemStatus,
+      collapsed: true,
+    }));
+    setItems((prev) => [...prev, ...newItems]);
+  }, [addFiles]);
+
+  // ── Remove item from batch ──
+  const handleRemoveItem = useCallback((index: number) => {
+    removeFile(index);
+    setItems((prev) => prev.filter((_, i) => i !== index));
+  }, [removeFile]);
+
+  // ── Analyze all queued items ──
+  const handleAnalyzeAll = useCallback(async () => {
+    setDialogState("analyzing");
+    setError(null);
+
+    // Get currently queued items
+    const queuedIndices = items
+      .map((item, i) => (item.status === "queued" ? i : -1))
+      .filter((i) => i >= 0);
+
+    for (const idx of queuedIndices) {
+      setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, status: "analyzing" } : it)));
+
+      try {
+        const item = items[idx];
+        const { imageUrl: url } = await wardrobeService.uploadImage(item.file);
+        const analysis = await aiAnalysisService.analyzeClothing(url);
+
+        const metadata: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(analysis)) {
+          if (value !== null && value !== undefined) metadata[key] = value;
         }
+
+        setItems((prev) =>
+          prev.map((it, i) =>
+            i === idx
+              ? {
+                  ...it,
+                  imageUrl: url,
+                  analysis,
+                  metadata,
+                  category: (analysis.category as ClothingCategory) || "tops",
+                  status: "analyzed",
+                  collapsed: true,
+                }
+              : it
+          )
+        );
+      } catch (err) {
+        setItems((prev) =>
+          prev.map((it, i) =>
+            i === idx
+              ? { ...it, status: "error", error: err instanceof Error ? err.message : "Analysis failed" }
+              : it
+          )
+        );
       }
-      setMetadata(initial);
-      setState("review");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Analysis failed");
-      // Fall back to manual: show review state with empty metadata
-      setAnalysis(null);
-      setMetadata({});
-      setState("review");
     }
-  }, [rawFile]);
 
-  // State 3 → 4: Save to backend
-  const handleSave = useCallback(async () => {
-    setState("saving");
-    setError(null);
-    try {
-      const name = (metadata.name as string) || "Untitled Item";
-      const itemData: ClothingItemInput = {
-        name,
-        category,
-        subcategory: "",
-        primaryColor: "",
-        secondaryColors: [],
-        colorTemperature: "",
-        colorIntensity: "",
-        pattern: "",
-        material: "",
-        texture: "",
-        transparency: "",
-        printType: "",
-        gender: "",
-        formality: null,
-        occasion: [],
-        style: [],
-        season: ["all"],
-        aiConfidence: analysis?.confidence ?? null,
-        aiAnalysis: (analysis as unknown as Record<string, unknown>) ?? {},
-        fit: "",
-        sleeveLength: "",
-        sleeveStyle: "",
-        neckline: "",
-        collarType: "",
-        cuffStyle: "",
-        length: "",
-        hemStyle: "",
-        closureType: "",
-        backDetail: "",
-        strapStyle: "",
-        rise: "",
-        pleatStyle: "",
-        distressing: "",
-        waistbandStyle: "",
-        legOpening: "",
-        warmthLevel: "",
-        waterResistance: "",
-        hood: "",
-        pockets: "",
-        silhouette: "",
-        heelHeight: "",
-        heelStyle: "",
-        toeStyle: "",
-        soleType: "",
-        shaftHeight: "",
-        accessoryType: "",
-        bandWidth: "",
-        sockHeight: "",
-        necklaceLength: "",
-        hatStyle: "",
-        earringStyle: "",
-        tieStyle: "",
-        watchStyle: "",
-        lensColor: "",
-        lining: "",
-        publicId: "",
-        imageUrl: imageUrl || "",
-        // Override with metadata (user's edits)
-        ...metadata,
-        color: ((metadata.primaryColor as string) || "other") as ClothingItemInput["color"],
-        brand: (metadata.brand as string) || "",
-        tags: (metadata.tags as string[]) || [],
-      };
-      await addItem(itemData);
-      resetForm();
-      wrappedClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save item");
-      setState("review");
+    setDialogState("reviewing");
+  }, [items]);
+
+  // ── Update a field on a specific item ──
+  const updateItemField = useCallback((itemId: string, key: string, value: unknown) => {
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === itemId ? { ...it, metadata: { ...it.metadata, [key]: value } } : it
+      )
+    );
+  }, []);
+
+  const updateItemCategory = useCallback((itemId: string, newCat: ClothingCategory) => {
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === itemId
+          ? { ...it, category: newCat, metadata: { ...it.metadata, category: newCat } }
+          : it
+      )
+    );
+  }, []);
+
+  const toggleItemCollapsed = useCallback((itemId: string) => {
+    setItems((prev) =>
+      prev.map((it) => (it.id === itemId ? { ...it, collapsed: !it.collapsed } : it))
+    );
+  }, []);
+
+  const toggleSection = useCallback((itemId: string, group: string) => {
+    setItems((prev) =>
+      prev.map((it) => {
+        if (it.id !== itemId) return it;
+        const collapsedSections = (it.metadata._collapsedSections as Set<string>) || new Set<string>();
+        const next = new Set(collapsedSections);
+        if (next.has(group)) next.delete(group);
+        else next.add(group);
+        return { ...it, metadata: { ...it.metadata, _collapsedSections: next } };
+      })
+    );
+  }, []);
+
+  // ── Approve / skip ──
+  const handleApprove = useCallback((itemId: string) => {
+    setItems((prev) =>
+      prev.map((it) => (it.id === itemId ? { ...it, status: "approved" } : it))
+    );
+  }, []);
+
+  const handleSkip = useCallback((itemId: string) => {
+    setItems((prev) => prev.filter((it) => it.id !== itemId));
+  }, []);
+
+  // ── Save all approved ──
+  const handleSaveApproved = useCallback(async () => {
+    const approved = items.filter((it) => it.status === "approved");
+    if (approved.length === 0) return;
+
+    setDialogState("saving");
+    setSavingProgress({ done: 0, total: approved.length });
+
+    let savedCount = 0;
+    for (const item of approved) {
+      try {
+        const itemData: ClothingItemInput = {
+          name: (item.metadata.name as string) || "Untitled Item",
+          category: item.category,
+          subcategory: "",
+          primaryColor: "",
+          secondaryColors: [],
+          colorTemperature: "",
+          colorIntensity: "",
+          pattern: "",
+          material: "",
+          texture: "",
+          transparency: "",
+          printType: "",
+          gender: "",
+          formality: null,
+          occasion: [],
+          style: [],
+          season: ["all"],
+          aiConfidence: item.analysis?.confidence ?? null,
+          aiAnalysis: (item.analysis as unknown as Record<string, unknown>) ?? {},
+          fit: "",
+          sleeveLength: "",
+          sleeveStyle: "",
+          neckline: "",
+          collarType: "",
+          cuffStyle: "",
+          length: "",
+          hemStyle: "",
+          closureType: "",
+          backDetail: "",
+          strapStyle: "",
+          rise: "",
+          pleatStyle: "",
+          distressing: "",
+          waistbandStyle: "",
+          legOpening: "",
+          warmthLevel: "",
+          waterResistance: "",
+          hood: "",
+          pockets: "",
+          silhouette: "",
+          heelHeight: "",
+          heelStyle: "",
+          toeStyle: "",
+          soleType: "",
+          shaftHeight: "",
+          accessoryType: "",
+          bandWidth: "",
+          sockHeight: "",
+          necklaceLength: "",
+          hatStyle: "",
+          earringStyle: "",
+          tieStyle: "",
+          watchStyle: "",
+          lensColor: "",
+          lining: "",
+          publicId: "",
+          imageUrl: item.imageUrl || "",
+          ...item.metadata,
+          color: ((item.metadata.primaryColor as string) || "other") as ClothingItemInput["color"],
+          brand: (item.metadata.brand as string) || "",
+          tags: (item.metadata.tags as string[]) || [],
+        };
+        await addItem(itemData);
+        savedCount++;
+        setSavingProgress({ done: savedCount, total: approved.length });
+      } catch (err) {
+        setError(
+          `Failed to save "${item.metadata.name || "Untitled Item"}": ${err instanceof Error ? err.message : "Unknown error"}`
+        );
+      }
     }
-  }, [metadata, category, imageUrl, analysis, addItem, resetForm, wrappedClose]);
 
-  // Update a single metadata field
-  const setField = (key: string, value: unknown) => {
-    setMetadata((prev) => ({ ...prev, [key]: value }));
-  };
+    resetForm();
+    wrappedClose();
+  }, [items, addItem, resetForm, wrappedClose]);
 
-  const handleCategoryChange = (newCat: ClothingCategory) => {
-    setCategory(newCat);
-    setMetadata((prev) => ({ ...prev, category: newCat }));
-  };
+  // ── Field rendering for a specific item ──
+  const fieldLabel = (key: string) =>
+    key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
 
-  const onFileSelect = async (file: File) => {
-    await processFile(file);
-    setState("select");
-    setError(null);
-  };
-
-  if (!shouldRender) return null;
-
-  const panelTransform =
-    phase === "enter" ? "translateY(100%)"
-    : phase === "exit" ? "translateY(100%)"
-    : "translateY(0)";
-
-  const fieldGroups = CATEGORY_FIELD_GROUPS[category];
-
-  // Render a dynamic field based on its type
-  const renderField = (key: string) => {
-    const val = metadata[key];
+  const renderField = (item: BatchItem, key: string) => {
+    const val = item.metadata[key];
     const stringVal = typeof val === "string" ? val : "";
     const arrayVal = Array.isArray(val) ? val : [];
     const numVal = typeof val === "number" ? val : null;
-    const isLowConfidence = analysis && analysis.confidence < 0.6;
+    const isLowConfidence = item.analysis && item.analysis.confidence < 0.6;
 
     if (TEXT_FIELDS.has(key)) {
       return (
         <input
           value={stringVal}
-          onChange={(e) => setField(key, e.target.value)}
+          onChange={(e) => updateItemField(item.id, key, e.target.value)}
           className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--glacier)/0.3)]"
         />
       );
@@ -255,10 +329,9 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground w-20 text-right">{numVal ?? "—"}/10</span>
           <input
-            type="range"
-            min={1} max={10}
+            type="range" min={1} max={10}
             value={numVal ?? 5}
-            onChange={(e) => setField(key, parseInt(e.target.value))}
+            onChange={(e) => updateItemField(item.id, key, parseInt(e.target.value))}
             className="flex-1 accent-[hsl(var(--glacier))]"
           />
         </div>
@@ -275,19 +348,19 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
           <input
             type="color"
             value={stringVal || "#808080"}
-            onChange={(e) => setField(key, e.target.value)}
+            onChange={(e) => updateItemField(item.id, key, e.target.value)}
             className="w-0 h-0 opacity-0 absolute"
-            id="primaryColorPicker"
+            id={`primaryColor-${item.id}`}
           />
           <label
-            htmlFor="primaryColorPicker"
+            htmlFor={`primaryColor-${item.id}`}
             className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
           >
             Pick
           </label>
           <input
             value={stringVal}
-            onChange={(e) => setField(key, e.target.value)}
+            onChange={(e) => updateItemField(item.id, key, e.target.value)}
             placeholder="#1a1a1a"
             className="flex-1 px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--glacier)/0.3)]"
           />
@@ -303,21 +376,19 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
               <span key={i} className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[hsl(var(--frost))] border border-[hsl(var(--border)/0.3)] text-xs">
                 <span className="w-4 h-4 rounded-sm border border-[hsl(var(--border)/0.3)]" style={{ backgroundColor: color }} />
                 <span className="font-mono">{color}</span>
-                <button type="button" onClick={() => setField(key, arrayVal.filter((_: string, j: number) => j !== i))} className="ml-0.5 text-muted-foreground hover:text-red-400">&times;</button>
+                <button type="button" onClick={() => updateItemField(item.id, key, arrayVal.filter((_: string, j: number) => j !== i))} className="ml-0.5 text-muted-foreground hover:text-red-400">&times;</button>
               </span>
             ))}
-            {arrayVal.length === 0 && (
-              <span className="text-xs text-muted-foreground">No additional colors detected</span>
-            )}
+            {arrayVal.length === 0 && <span className="text-xs text-muted-foreground">No additional colors</span>}
           </div>
           <input
-            placeholder="Add hex color and press Enter (e.g. #c0c0c0)"
+            placeholder="Add hex e.g. #c0c0c0 and press Enter"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
                 const val = (e.target as HTMLInputElement).value.trim();
                 if (val && /^#[0-9a-fA-F]{6}$/.test(val)) {
-                  setField(key, [...arrayVal, val]);
+                  updateItemField(item.id, key, [...arrayVal, val]);
                   (e.target as HTMLInputElement).value = "";
                 }
               }
@@ -334,22 +405,20 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
         return (
           <input
             value={stringVal}
-            onChange={(e) => setField(key, e.target.value)}
+            onChange={(e) => updateItemField(item.id, key, e.target.value)}
             className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--glacier)/0.3)]"
           />
         );
       }
-      return <MultiSelectPills values={arrayVal} onChange={(vals) => setField(key, vals)} options={options} />;
+      return <MultiSelectPills values={arrayVal} onChange={(vals) => updateItemField(item.id, key, vals)} options={options} />;
     }
 
-    // Regular select
     const options = FIELD_ENUMS[key];
     if (!options) {
-      // Free text field
       return (
         <input
           value={stringVal}
-          onChange={(e) => setField(key, e.target.value)}
+          onChange={(e) => updateItemField(item.id, key, e.target.value)}
           className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--glacier)/0.3)]"
         />
       );
@@ -359,7 +428,7 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
       <div className="relative">
         <select
           value={stringVal}
-          onChange={(e) => setField(key, e.target.value || null)}
+          onChange={(e) => updateItemField(item.id, key, e.target.value || null)}
           className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--glacier)/0.3)] appearance-none"
         >
           <option value="">—</option>
@@ -374,9 +443,17 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
     );
   };
 
-  const fieldLabel = (key: string) => {
-    return key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
-  };
+  // ── Helpers ──
+  const analyzedCount = items.filter((it) => it.status === "analyzed" || it.status === "approved").length;
+  const approvedCount = items.filter((it) => it.status === "approved").length;
+  const queuedCount = items.filter((it) => it.status === "queued").length;
+
+  if (!shouldRender) return null;
+
+  const panelTransform =
+    phase === "enter" ? "translateY(100%)"
+    : phase === "exit" ? "translateY(100%)"
+    : "translateY(0)";
 
   return (
     <div className="fixed inset-0 z-60 flex items-end md:items-center justify-center">
@@ -394,32 +471,20 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
             ? "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)" : "none",
         }}
       >
-        {/* Header */}
+        {/* ── Header ── */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-bold">
-            {state === "select" && "Add New Item"}
-            {state === "analyzing" && "Analyzing..."}
-            {state === "review" && (analysis ? "Review AI Results" : "Enter Details Manually")}
-            {state === "saving" && "Saving..."}
+            {dialogState === "collecting" && "Add Clothing Items"}
+            {dialogState === "analyzing" && `Analyzing... (${analyzedCount}/${items.length})`}
+            {dialogState === "reviewing" && `Review Results (${approvedCount} approved)`}
+            {dialogState === "saving" && `Saving... (${savingProgress.done}/${savingProgress.total})`}
           </h2>
-          <div className="flex items-center gap-2">
-            {analysis && (
-              <span className={cn(
-                "text-xs px-2 py-0.5 rounded-full",
-                analysis.confidence >= 0.7 ? "bg-green-500/10 text-green-600" :
-                analysis.confidence >= 0.4 ? "bg-amber-500/10 text-amber-600" :
-                "bg-red-500/10 text-red-600"
-              )}>
-                {Math.round(analysis.confidence * 100)}% confidence
-              </span>
-            )}
-            <button onClick={wrappedClose} className="w-8 h-8 rounded-full bg-[hsl(var(--frost))] flex items-center justify-center hover:bg-[hsl(var(--border)/0.3)] transition-colors">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          <button onClick={wrappedClose} className="w-8 h-8 rounded-full bg-[hsl(var(--frost))] flex items-center justify-center hover:bg-[hsl(var(--border)/0.3)] transition-colors">
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Error banner */}
+        {/* ── Error banner ── */}
         {error && (
           <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-600 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -427,156 +492,240 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
           </div>
         )}
 
-        {/* State 1: Image Selection */}
-        {state === "select" && (
+        {/* ══════════════════════════════════════════════
+            STATE: COLLECTING
+            ══════════════════════════════════════════════ */}
+        {dialogState === "collecting" && (
           <div className="space-y-4">
-            <ImageUploader preview={preview} onFileSelect={onFileSelect} onClear={clearPreview} isProcessing={isProcessing} />
+            <ImageUploader
+              multiple
+              previews={previews}
+              onFilesSelect={handleFilesSelected}
+              onRemove={handleRemoveItem}
+              isProcessing={isProcessing}
+              preview={null}
+              onFileSelect={() => {}}
+              onClear={() => {}}
+            />
             <button
-              onClick={handleAnalyze}
-              disabled={!rawFile}
+              onClick={handleAnalyzeAll}
+              disabled={queuedCount === 0}
               className="w-full py-3 rounded-2xl bg-[hsl(var(--glacier))] text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <Sparkles className="w-4 h-4" />
-              Analyze with AI
+              Analyze All ({queuedCount} {queuedCount === 1 ? "item" : "items"})
             </button>
           </div>
         )}
 
-        {/* State 2: Analyzing */}
-        {state === "analyzing" && (
+        {/* ══════════════════════════════════════════════
+            STATE: ANALYZING
+            ══════════════════════════════════════════════ */}
+        {dialogState === "analyzing" && (
           <div className="space-y-4">
-            {preview && (
-              <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-black/5">
-                <img src={preview} alt="Upload preview" className="w-full h-full object-contain" />
-              </div>
-            )}
-            <div className="flex flex-col items-center justify-center gap-3 py-8">
-              <style>{`
-                @keyframes idrip-spin {
-                  from { transform: rotate(0deg); }
-                  to { transform: rotate(360deg); }
-                }
-              `}</style>
-              <div
-                className="w-6 h-6 border-2 border-[hsl(var(--glacier)/0.3)] border-t-[hsl(var(--glacier))] rounded-full"
-                style={{ animation: "idrip-spin 0.8s linear infinite" }}
-              />
-              <span className="text-sm text-muted-foreground">AI is analyzing your clothing...</span>
+            <div className="flex items-center justify-center gap-3 py-4">
+              <Loader2 className="w-5 h-5 animate-spin text-[hsl(var(--glacier))]" />
+              <span className="text-sm text-muted-foreground">
+                Analyzing {analyzedCount + 1} of {items.length}...
+              </span>
             </div>
-            <div className="space-y-3 opacity-50">
-              <SkeletonField />
-              <SkeletonField />
-              <div className="grid grid-cols-2 gap-3">
-                <SkeletonField />
-                <SkeletonField />
-              </div>
-              <SkeletonField />
+
+            <div className="grid grid-cols-3 gap-2">
+              {items.map((item, i) => (
+                <div key={item.id} className="relative aspect-[3/4] rounded-xl overflow-hidden bg-black/5">
+                  <img src={item.preview} alt={`Item ${i + 1}`} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                    {item.status === "analyzing" && (
+                      <Loader2 className="w-6 h-6 animate-spin text-white" />
+                    )}
+                    {item.status === "analyzed" && (
+                      <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
+                        <Check className="w-5 h-5 text-white" />
+                      </div>
+                    )}
+                    {item.status === "error" && (
+                      <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
+                        <AlertTriangle className="w-5 h-5 text-white" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
-        {/* State 3: Review & Edit */}
-        {(state === "review" || state === "saving") && (
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Image */}
-            <div className="md:w-2/5 shrink-0">
-              <div className="w-full aspect-[3/4] rounded-xl overflow-hidden bg-black/5 sticky top-0">
-                {preview ? (
-                  <img src={preview} alt="Item" className="w-full h-full object-cover" />
-                ) : imageUrl ? (
-                  <img src={imageUrl} alt="Item" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">No image</div>
-                )}
+        {/* ══════════════════════════════════════════════
+            STATE: REVIEWING
+            ══════════════════════════════════════════════ */}
+        {dialogState === "reviewing" && (
+          <div className="space-y-3">
+            {items.filter((it) => it.status === "analyzed" || it.status === "approved").length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                No items were analyzed successfully. Go back and try again.
               </div>
-              {analysis && (
-                <button
-                  onClick={handleAnalyze}
-                  className="w-full mt-2 py-2 rounded-xl border border-[hsl(var(--border)/0.4)] text-xs text-muted-foreground hover:bg-[hsl(var(--frost))] transition-colors"
-                >
-                  Re-analyze
-                </button>
-              )}
-            </div>
+            ) : (
+              items.map((item) => {
+                if (item.status !== "analyzed" && item.status !== "approved") return null;
+                const fieldGroups = CATEGORY_FIELD_GROUPS[item.category];
+                const collapsedSections: Set<string> = (item.metadata._collapsedSections as Set<string>) || new Set();
 
-            {/* Form */}
-            <div className="md:w-3/5 space-y-4">
-              {/* Name + Category + Brand (always visible) */}
-              <div>
-                <label className="text-xs font-medium mb-1 block text-muted-foreground">Name *</label>
-                {renderField("name")}
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium mb-1 block text-muted-foreground">Category</label>
-                  <select
-                    value={category}
-                    onChange={(e) => handleCategoryChange(e.target.value as ClothingCategory)}
-                    className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--glacier)/0.3)]"
-                  >
-                    {CLOTHING_CATEGORIES.filter((c) => c.value !== "all").map((c) => (
-                      <option key={c.value} value={c.value}>{c.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block text-muted-foreground">Brand</label>
-                  {renderField("brand")}
-                </div>
-              </div>
-
-              {/* Dynamic category sections */}
-              {fieldGroups.map((group) => {
-                const isCollapsed = collapsedSections.has(group.group);
                 return (
-                  <div key={group.group}>
-                    <button
-                      type="button"
-                      onClick={() => toggleSection(group.group)}
-                      className="w-full flex items-center justify-between py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
-                    >
-                      {group.group}
-                      {isCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
-                    </button>
-                    {!isCollapsed && (
-                      <div className="grid grid-cols-2 gap-3 mt-1">
-                        {group.fields.map((key) => (
-                          <div key={key} className={group.fields.length % 2 === 1 && key === group.fields[group.fields.length - 1] ? "col-span-2" : ""}>
-                            <label className="text-xs font-medium mb-1 block text-muted-foreground">
-                              {fieldLabel(key)}
-                            </label>
-                            {renderField(key)}
+                  <div
+                    key={item.id}
+                    className={cn(
+                      "rounded-xl border transition-colors",
+                      item.status === "approved"
+                        ? "border-green-500/30 bg-green-500/5"
+                        : "border-[hsl(var(--border)/0.4)] bg-[hsl(var(--frost)/0.7)]"
+                    )}
+                  >
+                    {/* Item card header */}
+                    <div className="flex items-center gap-3 p-3">
+                      <div className="w-14 h-14 rounded-lg overflow-hidden bg-black/5 shrink-0">
+                        <img src={item.preview} alt="" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {(item.metadata.name as string) || "Untitled Item"}
+                        </p>
+                        <p className="text-xs text-muted-foreground capitalize">{item.category}</p>
+                        {item.analysis && (
+                          <span className={cn(
+                            "text-[10px] px-1.5 py-0.5 rounded-full",
+                            item.analysis.confidence >= 0.7 ? "bg-green-500/10 text-green-600" :
+                            item.analysis.confidence >= 0.4 ? "bg-amber-500/10 text-amber-600" :
+                            "bg-red-500/10 text-red-600"
+                          )}>
+                            {Math.round(item.analysis.confidence * 100)}%
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => toggleItemCollapsed(item.id)}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[hsl(var(--border)/0.2)] transition-colors"
+                        >
+                          {item.collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                        </button>
+                        {item.status !== "approved" && (
+                          <>
+                            <button
+                              onClick={() => handleApprove(item.id)}
+                              className="w-8 h-8 rounded-lg bg-green-500/10 text-green-600 flex items-center justify-center hover:bg-green-500/20 transition-colors"
+                              title="Approve"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleSkip(item.id)}
+                              className="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500/20 transition-colors"
+                              title="Skip"
+                            >
+                              <EyeOff className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                        {item.status === "approved" && (
+                          <span className="text-xs font-semibold text-green-600 px-2">Approved</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Expanded form */}
+                    {!item.collapsed && (
+                      <div className="px-4 pb-4 border-t border-[hsl(var(--border)/0.2)] pt-3 space-y-4">
+                        <div>
+                          <label className="text-xs font-medium mb-1 block text-muted-foreground">Name *</label>
+                          {renderField(item, "name")}
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs font-medium mb-1 block text-muted-foreground">Category</label>
+                            <select
+                              value={item.category}
+                              onChange={(e) => updateItemCategory(item.id, e.target.value as ClothingCategory)}
+                              className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--glacier)/0.3)]"
+                            >
+                              {CLOTHING_CATEGORIES.filter((c) => c.value !== "all").map((c) => (
+                                <option key={c.value} value={c.value}>{c.label}</option>
+                              ))}
+                            </select>
                           </div>
-                        ))}
+                          <div>
+                            <label className="text-xs font-medium mb-1 block text-muted-foreground">Brand</label>
+                            {renderField(item, "brand")}
+                          </div>
+                        </div>
+
+                        {fieldGroups.map((group) => {
+                          const isCollapsed = collapsedSections.has(group.group);
+                          return (
+                            <div key={group.group}>
+                              <button
+                                type="button"
+                                onClick={() => toggleSection(item.id, group.group)}
+                                className="w-full flex items-center justify-between py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                              >
+                                {group.group}
+                                {isCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+                              </button>
+                              {!isCollapsed && (
+                                <div className="grid grid-cols-2 gap-3 mt-1">
+                                  {group.fields.map((key) => (
+                                    <div key={key} className={group.fields.length % 2 === 1 && key === group.fields[group.fields.length - 1] ? "col-span-2" : ""}>
+                                      <label className="text-xs font-medium mb-1 block text-muted-foreground">
+                                        {fieldLabel(key)}
+                                      </label>
+                                      {renderField(item, key)}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
                 );
-              })}
+              })
+            )}
 
-              {/* Save button */}
+            {/* Bottom action bar */}
+            <div className="sticky bottom-0 bg-[hsl(var(--frost)/0.97)] backdrop-blur-xl border-t border-[hsl(var(--border)/0.3)] -mx-6 -mb-6 px-6 py-4 rounded-b-3xl flex items-center justify-between gap-4">
+              <p className="text-sm text-muted-foreground">
+                {approvedCount} of {items.filter((it) => it.status === "analyzed" || it.status === "approved").length} approved
+              </p>
               <button
-                onClick={handleSave}
-                disabled={state === "saving" || !metadata.name}
-                className="w-full py-3 rounded-2xl bg-[hsl(var(--glacier))] text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                onClick={handleSaveApproved}
+                disabled={approvedCount === 0}
+                className="px-6 py-2.5 rounded-xl bg-[hsl(var(--glacier))] text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {state === "saving" && (
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full" style={{ animation: "idrip-spin 0.8s linear infinite" }} />
-                )}
-                Save to Wardrobe
+                Save {approvedCount} {approvedCount === 1 ? "Item" : "Items"}
               </button>
             </div>
           </div>
         )}
 
-        {/* State 4: Saving */}
-        {state === "saving" && (
-          <div className="flex items-center justify-center gap-3 py-12">
+        {/* ══════════════════════════════════════════════
+            STATE: SAVING
+            ══════════════════════════════════════════════ */}
+        {dialogState === "saving" && (
+          <div className="flex flex-col items-center justify-center gap-4 py-12">
+            <style>{`
+              @keyframes idrip-spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
             <div
-              className="w-6 h-6 border-2 border-[hsl(var(--glacier)/0.3)] border-t-[hsl(var(--glacier))] rounded-full"
+              className="w-8 h-8 border-2 border-[hsl(var(--glacier)/0.3)] border-t-[hsl(var(--glacier))] rounded-full"
               style={{ animation: "idrip-spin 0.8s linear infinite" }}
             />
-            <span className="text-sm text-muted-foreground">Saving to your wardrobe...</span>
+            <p className="text-sm text-muted-foreground">
+              Saved {savingProgress.done} of {savingProgress.total} items...
+            </p>
           </div>
         )}
       </div>
