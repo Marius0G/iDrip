@@ -1,5 +1,65 @@
 import type { ClothingItem } from "@/types/wardrobe";
 
+const defaults: Omit<ClothingItem, "id" | "name" | "category" | "color" | "tags" | "imageUrl" | "season" | "brand" | "createdAt" | "updatedAt" | "subcategory"> = {
+  primaryColor: "",
+  secondaryColors: [],
+  colorTemperature: "",
+  colorIntensity: "",
+  pattern: "",
+  material: "",
+  texture: "",
+  transparency: "",
+  printType: "",
+  gender: "",
+  formality: null,
+  occasion: [],
+  style: [],
+  aiConfidence: null,
+  aiAnalysis: {},
+  fit: "",
+  sleeveLength: "",
+  sleeveStyle: "",
+  neckline: "",
+  collarType: "",
+  cuffStyle: "",
+  length: "",
+  hemStyle: "",
+  closureType: "",
+  backDetail: "",
+  strapStyle: "",
+  rise: "",
+  pleatStyle: "",
+  distressing: "",
+  waistbandStyle: "",
+  legOpening: "",
+  warmthLevel: "",
+  waterResistance: "",
+  hood: "",
+  pockets: "",
+  silhouette: "",
+  heelHeight: "",
+  heelStyle: "",
+  toeStyle: "",
+  soleType: "",
+  shaftHeight: "",
+  accessoryType: "",
+  bandWidth: "",
+  sockHeight: "",
+  necklaceLength: "",
+  hatStyle: "",
+  earringStyle: "",
+  tieStyle: "",
+  watchStyle: "",
+  lensColor: "",
+  lining: "",
+  publicId: "",
+  notes: "",
+};
+
+function fill<T extends object>(item: T): ClothingItem {
+  return { ...defaults, ...item } as unknown as ClothingItem;
+}
+
 export const mockClothingItems: ClothingItem[] = [
   { id: "1", name: "Black Oversized Tee", category: "tops", subcategory: "t-shirt", color: "black", tags: ["casual", "streetwear"], imageUrl: "https://placehold.co/400x500/1a1a1a/ffffff?text=Black+Tee", season: ["summer", "spring", "fall"], brand: "Essential", createdAt: "2024-01-15T10:00:00Z", updatedAt: "2024-01-15T10:00:00Z" },
   { id: "2", name: "White Oxford Shirt", category: "tops", subcategory: "shirt", color: "white", tags: ["smart-casual", "formal"], imageUrl: "https://placehold.co/400x500/f5f5f5/111111?text=Oxford+Shirt", season: ["all"], brand: "COS", createdAt: "2024-01-16T10:00:00Z", updatedAt: "2024-01-16T10:00:00Z" },
@@ -19,4 +79,4 @@ export const mockClothingItems: ClothingItem[] = [
   { id: "16", name: "Silver Watch", category: "accessories", subcategory: "watch", color: "gray", tags: ["minimalist", "everyday"], imageUrl: "https://placehold.co/400x500/c0c0c0/111111?text=Silver+Watch", season: ["all"], brand: "Casio", createdAt: "2024-01-30T10:00:00Z", updatedAt: "2024-01-30T10:00:00Z" },
   { id: "17", name: "Black Leather Belt", category: "accessories", subcategory: "belt", color: "black", tags: ["formal", "versatile"], imageUrl: "https://placehold.co/400x500/1a1a1a/ffffff?text=Leather+Belt", season: ["all"], brand: "AllSaints", createdAt: "2024-02-01T10:00:00Z", updatedAt: "2024-02-01T10:00:00Z" },
   { id: "18", name: "White Canvas Tote", category: "accessories", subcategory: "bag", color: "white", tags: ["casual", "minimalist"], imageUrl: "https://placehold.co/400x500/fafafa/111111?text=Canvas+Tote", season: ["spring", "summer"], brand: "Everlane", createdAt: "2024-02-20T10:00:00Z", updatedAt: "2024-02-20T10:00:00Z" },
-];
+].map(fill);

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useAnimatedMount } from "@/hooks/useAnimatedMount";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { FEEDBACK_OPTIONS } from "@/data/styles";
-import type { Outfit, OutfitSlotKey } from "@/types/outfit";
+import type { Outfit } from "@/types/outfit";
 
 interface OutfitPreviewModalProps {
   open: boolean;

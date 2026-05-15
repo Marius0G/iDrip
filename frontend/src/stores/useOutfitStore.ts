@@ -85,7 +85,7 @@ interface OutfitState {
 
 export const useOutfitStore = create<OutfitState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       outfits: [],
       currentBuild: {},
       pendingOutfit: null,

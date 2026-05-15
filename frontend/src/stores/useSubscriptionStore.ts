@@ -19,7 +19,7 @@ interface SubscriptionState {
 
 export const useSubscriptionStore = create<SubscriptionState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       plans: [],
       currentSubscription: null,
       isLoading: false,

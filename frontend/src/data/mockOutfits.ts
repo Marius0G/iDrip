@@ -3,6 +3,22 @@ import { mockClothingItems } from "./mockClothingItems";
 
 const findItem = (id: string) => mockClothingItems.find((i) => i.id === id)!;
 
+const defaults: Pick<Outfit, "tags" | "collectionName" | "colorScheme" | "weatherScore" | "styleScore" | "savedByUser" | "rating" | "aiGenerated" | "score"> = {
+  tags: [],
+  collectionName: "",
+  colorScheme: [],
+  weatherScore: null,
+  styleScore: null,
+  savedByUser: false,
+  rating: undefined as unknown as never,
+  aiGenerated: false,
+  score: undefined as unknown as never,
+};
+
+function fill<T extends object>(item: T): Outfit {
+  return { ...defaults, ...item } as unknown as Outfit;
+}
+
 export const mockOutfits: Outfit[] = [
   {
     id: "o1", name: "Minimal Monochrome", occasion: "work", season: ["all"], rating: 4, aiGenerated: true, score: 92,
@@ -57,4 +73,4 @@ export const mockOutfits: Outfit[] = [
     ],
     createdAt: "2024-02-20T19:00:00Z",
   },
-];
+].map(fill);

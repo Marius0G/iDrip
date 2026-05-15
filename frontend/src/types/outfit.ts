@@ -3,7 +3,7 @@ import type { Season } from "./wardrobe";
 
 export type OutfitOccasion =
   | "casual" | "business" | "formal" | "date" | "sport"
-  | "party" | "travel" | "beach" | "outdoor";
+  | "party" | "travel" | "beach" | "outdoor" | "work";
 
 export type Weather =
   | "rainy" | "snowy" | "sunny" | "cold" | "hot"

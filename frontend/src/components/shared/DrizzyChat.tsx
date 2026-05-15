@@ -20,7 +20,7 @@ export function DrizzyChat() {
         }}
         transition={{ duration: 0.32, ease }}
         onClick={!open ? () => setOpen(true) : undefined}
-        onKeyDown={(e) => {
+        onKeyDown={(e: React.KeyboardEvent) => {
           if (!open && (e.key === "Enter" || e.key === " ")) {
             e.preventDefault();
             setOpen(true);
@@ -66,7 +66,7 @@ export function DrizzyChat() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.7 }}
                 transition={{ duration: 0.18, ease }}
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
                   setOpen(false);
                 }}

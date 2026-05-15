@@ -10,7 +10,7 @@ import { useAnimatedMount } from "@/hooks/useAnimatedMount";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { CLOTHING_CATEGORIES } from "@/data/categories";
 import { CATEGORY_FIELD_GROUPS, FIELD_ENUMS, MULTI_SELECT_FIELDS, TEXT_FIELDS } from "@/lib/fieldConfig";
-import type { ClothingCategory, ClothingItemInput, Season } from "@/types/wardrobe";
+import type { ClothingCategory, ClothingItemInput } from "@/types/wardrobe";
 
 type DialogState = "select" | "analyzing" | "review" | "saving";
 
@@ -194,10 +194,9 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
         imageUrl: imageUrl || "",
         // Override with metadata (user's edits)
         ...metadata,
-        color: (metadata.primaryColor as string) || "other",
+        color: ((metadata.primaryColor as string) || "other") as ClothingItemInput["color"],
         brand: (metadata.brand as string) || "",
         tags: (metadata.tags as string[]) || [],
-        season: (metadata.season as Season[]) || ["all"],
       };
       await addItem(itemData);
       resetForm();
@@ -477,7 +476,7 @@ export function ClothingUploadDialog({ open, onClose }: ClothingUploadDialogProp
         )}
 
         {/* State 3: Review & Edit */}
-        {state === "review" && (
+        {(state === "review" || state === "saving") && (
           <div className="flex flex-col md:flex-row gap-6">
             {/* Image */}
             <div className="md:w-2/5 shrink-0">
