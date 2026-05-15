@@ -48,7 +48,7 @@ function IDripLogoSvg({
 }
 
 const BACKEND_URL =
-  import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000";
+  import.meta.env.VITE_API_URL?.replace(/\/api$/, "") || "http://localhost:5000";
 
 // Slowed down so the entrance feels gentler.
 const LOGO_FADE = 1.8;
