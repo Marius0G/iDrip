@@ -15,41 +15,57 @@ export default function ShoppingPage() {
   const filtered = getFilteredRecommendations();
 
   return (
-    <PageContainer noTopPadding>
-      <div className="mb-8">
-        <p className="text-overline mb-2">
-          CURATED FOR YOU<span className="text-[hsl(var(--punctuation))]">.</span>
-        </p>
-        <h2 className="text-display text-4xl md:text-5xl text-[hsl(var(--peak))] mb-2">
-          Smart Shopping
-        </h2>
-        <p className="text-base text-muted-foreground">
-          AI-powered recommendations<span className="text-[hsl(var(--punctuation))]">.</span>
+    <PageContainer>
+      <div className="mb-6">
+        <p className="kit-overline">Smart</p>
+        <h2 className="kit-display text-3xl md:text-4xl mt-1.5">Shopping</h2>
+        <p className="text-sm kit-muted mt-2">
+          AI-powered recommendations for your wardrobe
         </p>
       </div>
 
       <div className="space-y-6">
-        <BudgetSlider budget={budget.monthlyBudget} spent={budget.spent} currency={budget.currency} onChange={(v) => setBudget({ monthlyBudget: v })} />
+        <BudgetSlider
+          budget={budget.monthlyBudget}
+          spent={budget.spent}
+          currency={budget.currency}
+          onChange={(v) => setBudget({ monthlyBudget: v })}
+        />
 
         <div>
-          <h3 className="text-sm font-medium mb-2">Style Preferences</h3>
+          <label className="kit-overline block mb-2">Style Preferences</label>
           <StyleTagSelector selected={selectedStyles} onToggle={toggleStyle} />
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold">Recommendations</h3>
-            <span className="text-sm text-muted-foreground">{filtered.length} items</span>
+          <div className="flex items-end justify-between mb-3 gap-4">
+            <div>
+              <p className="kit-overline">For you</p>
+              <h3 className="kit-display text-2xl md:text-3xl mt-1.5">
+                Recommendations
+              </h3>
+            </div>
+            <span className="text-sm kit-muted">
+              {filtered.length} {filtered.length === 1 ? "item" : "items"}
+            </span>
           </div>
 
           {filtered.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filtered.map((rec) => (
-                <RecommendationCard key={rec.id} recommendation={rec} onDismiss={dismissRecommendation} />
+                <RecommendationCard
+                  key={rec.id}
+                  recommendation={rec}
+                  onDismiss={dismissRecommendation}
+                />
               ))}
             </div>
           ) : (
-            <EmptyState icon={ShoppingBag} title="No recommendations" description="Try adjusting your budget or style preferences" />
+            <EmptyState
+              icon={ShoppingBag}
+              title="No recommendations"
+              description="Try adjusting your budget or style preferences"
+            />
           )}
         </div>
       </div>

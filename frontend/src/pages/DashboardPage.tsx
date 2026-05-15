@@ -27,6 +27,7 @@ export default function DashboardPage() {
   const budget = useShoppingStore((s) => s.budget);
   const loadRecommendations = useShoppingStore((s) => s.loadRecommendations);
   const [showUpload, setShowUpload] = useState(false);
+  const [weekAgo] = useState(() => Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   useEffect(() => {
     loadItems();
@@ -35,33 +36,20 @@ export default function DashboardPage() {
   }, [loadItems, loadOutfits, loadRecommendations]);
 
   const remaining = budget.monthlyBudget - budget.spent;
-  const recentItems = items.filter((i) => {
-    const week = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    return new Date(i.createdAt).getTime() > week;
-  });
+  const recentItems = items.filter(
+    (i) => new Date(i.createdAt).getTime() > weekAgo
+  );
 
   return (
-    <PageContainer noTopPadding>
-      {/* ─── HERO ─── */}
-      <section className="pt-8 md:pt-10 pb-6 md:pb-8 mb-8">
-        <p className="text-overline mb-3">
-          {editionOverline}
-          <span className="text-[hsl(var(--punctuation))]">.</span>
-        </p>
-        <h2 className="text-display text-4xl md:text-5xl lg:text-6xl text-[hsl(var(--peak))] mb-4 animate-frost-reveal">
-          Good {timeOfDay},{" "}
-          {user?.name?.split(" ")[0] || "friend"}
+    <PageContainer>
+      <div className="mb-8">
+        <p className="kit-overline">Good {timeOfDay}</p>
+        <h2 className="kit-display text-3xl md:text-4xl mt-2">
+          {user?.name?.split(" ")[0] || "User"}
+          <span className="kit-display ml-1 text-[hsl(var(--sidebar-accent))]">.</span>
         </h2>
-        <p
-          className="text-xl md:text-2xl font-bold tracking-tight text-[hsl(var(--peak)/0.85)] animate-frost-reveal"
-          style={{ animationDelay: "0.1s", animationFillMode: "both" }}
-        >
-          Your style
-          <span className="text-[hsl(var(--punctuation))]">,</span> elevated
-          <span className="text-[hsl(var(--punctuation))]">.</span>
-        </p>
-        <div className="mt-6 w-16 h-[3px] bg-[hsl(var(--glacier))] rounded-full" />
-      </section>
+        <p className="text-sm kit-muted mt-3">Here's your style overview</p>
+      </div>
 
       {items.length === 0 ? (
         <EmptyState

@@ -28,20 +28,16 @@ export default function WardrobePage() {
   }, [setFilter]);
 
   return (
-    <PageContainer noTopPadding>
-      <div className="mb-8">
-        <p className="text-overline mb-2">
-          COLLECTION<span className="text-[hsl(var(--punctuation))]">.</span>
-        </p>
-        <h2 className="text-display text-4xl md:text-5xl text-[hsl(var(--peak))] mb-2">
-          My Wardrobe
-        </h2>
-        <p className="text-base text-muted-foreground">
-          {items.length} pieces curated<span className="text-[hsl(var(--punctuation))]">.</span>
-        </p>
-      </div>
-      <div className="flex items-center justify-end mb-6">
-        <button onClick={() => setShowUpload(true)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[hsl(var(--glacier))] text-white text-sm font-medium hover:opacity-90 transition-opacity">
+    <PageContainer>
+      <div className="flex items-end justify-between mb-6 gap-4">
+        <div>
+          <p className="kit-overline">My</p>
+          <h2 className="kit-display text-3xl md:text-4xl mt-1.5">Wardrobe</h2>
+          <p className="text-sm kit-muted mt-2">
+            {items.length} {items.length === 1 ? "item" : "items"}
+          </p>
+        </div>
+        <button onClick={() => setShowUpload(true)} className="kit-btn-primary">
           <Plus className="w-4 h-4" /> Add Item
         </button>
       </div>

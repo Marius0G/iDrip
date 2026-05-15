@@ -21,15 +21,22 @@ export function useAnimatedMount({
 
   useEffect(() => {
     if (open) {
-      setPhase("enter");
-      const t = requestAnimationFrame(() => {
-        requestAnimationFrame(() => setPhase("visible"));
+      let visibleFrame = 0;
+      const enterFrame = requestAnimationFrame(() => {
+        setPhase("enter");
+        visibleFrame = requestAnimationFrame(() => setPhase("visible"));
       });
-      return () => cancelAnimationFrame(t);
+      return () => {
+        cancelAnimationFrame(enterFrame);
+        cancelAnimationFrame(visibleFrame);
+      };
     } else {
-      setPhase("exit");
+      const exitFrame = requestAnimationFrame(() => setPhase("exit"));
       const t = setTimeout(() => setPhase("hidden"), exitDuration);
-      return () => clearTimeout(t);
+      return () => {
+        cancelAnimationFrame(exitFrame);
+        clearTimeout(t);
+      };
     }
   }, [open, exitDuration]);
 

@@ -7,11 +7,22 @@ import {
   Crown,
   User,
   LogOut,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
 import { useUserStore } from "@/stores/useUserStore";
 import { useSubscriptionStore } from "@/stores/useSubscriptionStore";
+import { useThemeStore, type Theme } from "@/stores/useThemeStore";
+import { LogoWide } from "@/components/brand/Logo";
+
+const themeOptions: { value: Theme; icon: typeof Sun; label: string }[] = [
+  { value: "light", icon: Sun, label: "Light" },
+  { value: "dark", icon: Moon, label: "Dark" },
+  { value: "system", icon: Monitor, label: "System" },
+];
 
 const navItems = [
   { path: ROUTES.HOME, label: "Home", icon: LayoutDashboard },
@@ -22,25 +33,20 @@ const navItems = [
 
 export function Sidebar() {
   const logout = useUserStore((s) => s.logout);
-  const tier = useSubscriptionStore((s) => s.currentSubscription?.tier || 'free');
+  const tier = useSubscriptionStore((s) => s.currentSubscription?.tier || "free");
+  const theme = useThemeStore((s) => s.theme);
+  const setTheme = useThemeStore((s) => s.setTheme);
 
   return (
-    <aside className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 bg-[hsl(var(--frost)/0.75)] backdrop-blur-2xl border-r border-[hsl(var(--border)/0.4)] z-40">
-      {/* Logo */}
-      <div className="px-6 pt-7 pb-4">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          iDrip<span className="text-[hsl(var(--punctuation))]">.</span>
-        </h1>
-        <p className="text-overline mt-1.5">
-          AI Personal Stylist<span className="text-[hsl(var(--punctuation))]">.</span>
-        </p>
+    <aside className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 z-40 sidebar-shell border-r">
+      <div className="px-6 pt-7 pb-4 flex flex-col gap-1.5">
+        <LogoWide className="h-7 w-auto self-start" />
+        <span className="sidebar-eyebrow">AI Personal Stylist</span>
       </div>
 
-      {/* Angular accent strip — glacier blue peak */}
-      <div className="mx-6 h-[2px] bg-gradient-to-r from-[hsl(var(--glacier))] via-[hsl(var(--glacier)/0.4)] to-transparent" />
+      <div className="mx-6 sidebar-divider" />
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-5 space-y-0.5">
+      <nav className="flex-1 px-3 py-5 space-y-1">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
@@ -48,40 +54,53 @@ export function Sidebar() {
             end={item.path === "/"}
             className={({ isActive }) =>
               cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 relative group",
-                isActive
-                  ? "bg-[hsl(var(--glacier))] text-white shadow-[0_4px_12px_-2px_hsl(var(--glacier)/0.35)]"
-                  : "text-[hsl(var(--peak)/0.65)] hover:text-[hsl(var(--peak))] hover:bg-[hsl(var(--frost))]"
+                "sidebar-item group",
+                isActive ? "sidebar-item-active" : "sidebar-item-inactive"
               )
             }
           >
-            <item.icon
-              className={cn(
-                "w-[18px] h-[18px] transition-transform duration-200",
-                "group-hover:scale-110"
-              )}
-            />
+            <item.icon className="w-[18px] h-[18px] transition-transform duration-200 group-hover:scale-110" />
             {item.label}
           </NavLink>
         ))}
       </nav>
 
-      {/* Bottom section — upgrade (free only) + profile + sign out */}
-      <div className="px-3 pb-4 space-y-0.5">
-        {/* Thin red rule */}
-        <div className="mx-3 mb-2 h-px bg-[hsl(var(--punctuation)/0.2)]" />
+      <div className="px-3 pb-4 space-y-1">
+        <div className="mx-3 mb-3 sidebar-divider" />
 
-        {tier === 'free' && (
+        <div
+          role="radiogroup"
+          aria-label="Theme"
+          className="flex w-full p-1 mb-1 rounded-xl border bg-[hsl(var(--sidebar-hover))] border-[hsl(var(--sidebar-border)/0.8)]"
+        >
+          {themeOptions.map((o) => {
+            const active = theme === o.value;
+            return (
+              <button
+                key={o.value}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                aria-label={o.label}
+                title={o.label}
+                onClick={() => setTheme(o.value)}
+                className={cn(
+                  "flex-1 inline-flex items-center justify-center h-7 rounded-lg transition-colors duration-150",
+                  active
+                    ? "bg-[hsl(var(--sidebar-active-bg))] text-[hsl(var(--sidebar-active-fg))] shadow-sm"
+                    : "text-[hsl(var(--sidebar-fg-muted))] hover:text-[hsl(var(--sidebar-fg))]"
+                )}
+              >
+                <o.icon className="w-[15px] h-[15px]" />
+              </button>
+            );
+          })}
+        </div>
+
+        {tier === "free" && (
           <NavLink
             to={ROUTES.SUBSCRIPTION}
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
-                isActive
-                  ? "bg-[hsl(var(--glacier))] text-white shadow-[0_4px_12px_-2px_hsl(var(--glacier)/0.35)]"
-                  : "text-[hsl(var(--glacier))] hover:bg-[hsl(var(--glacier)/0.08)]"
-              )
-            }
+            className="sidebar-item sidebar-item-accent"
           >
             <Crown className="w-[18px] h-[18px]" />
             Upgrade
@@ -92,20 +111,16 @@ export function Sidebar() {
           to={ROUTES.PROFILE}
           className={({ isActive }) =>
             cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
-              isActive
-                ? "bg-[hsl(var(--glacier))] text-white shadow-[0_4px_12px_-2px_hsl(var(--glacier)/0.35)]"
-                : "text-[hsl(var(--peak)/0.65)] hover:text-[hsl(var(--peak))] hover:bg-[hsl(var(--frost))]"
+              "sidebar-item",
+              isActive ? "sidebar-item-active" : "sidebar-item-inactive"
             )
           }
         >
           <User className="w-[18px] h-[18px]" />
           Profile
         </NavLink>
-        <button
-          onClick={logout}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 w-full text-[hsl(var(--peak)/0.5)] hover:text-[hsl(var(--punctuation))] hover:bg-[hsl(var(--punctuation)/0.06)]"
-        >
+
+        <button onClick={logout} className="sidebar-item sidebar-item-danger">
           <LogOut className="w-[18px] h-[18px]" />
           Sign Out
         </button>

@@ -1,27 +1,35 @@
-import { useUserStore } from "@/stores/useUserStore";
+import { Sun, Moon } from "lucide-react";
+import { useThemeStore } from "@/stores/useThemeStore";
+import { LogoWide } from "@/components/brand/Logo";
+import { UserMenu } from "@/components/ui/UserMenu";
 
 export function Header() {
-  const user = useUserStore((s) => s.user);
+  const theme = useThemeStore((s) => s.theme);
+  const setTheme = useThemeStore((s) => s.setTheme);
+
+  const isDark =
+    theme === "dark" ||
+    (theme === "system" &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   return (
-    <header className="md:hidden sticky top-0 z-40 bg-[hsl(var(--frost)/0.8)] backdrop-blur-xl safe-area-top">
-      <div className="flex items-center justify-between px-4 py-3">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">
-            iDrip<span className="text-[hsl(var(--punctuation))]">.</span>
-          </h1>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70 -mt-0.5">
-            Personal Stylist
-          </p>
-        </div>
-        <div className="w-8 h-8 rounded-xl bg-[hsl(var(--glacier)/0.12)] flex items-center justify-center border border-[hsl(var(--glacier)/0.2)]">
-          <span className="text-xs font-semibold text-[hsl(var(--peak))]">
-            {user?.name?.charAt(0) || "?"}
-          </span>
+    <header className="md:hidden sticky top-0 z-40 sidebar-shell border-b safe-area-top">
+      <div className="flex items-center justify-between px-4 py-2.5">
+        <LogoWide className="h-6 w-auto" />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+            title={isDark ? "Light" : "Dark"}
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+            className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-[hsl(var(--sidebar-accent))] text-black shadow-[0_2px_10px_-2px_hsl(var(--sidebar-accent)/0.5)] active:scale-[0.96] hover:brightness-110 transition-all"
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+          <UserMenu />
         </div>
       </div>
-      {/* Glacier gradient accent */}
-      <div className="absolute bottom-0 left-3 right-3 h-[2px] bg-gradient-to-r from-[hsl(var(--glacier))] via-[hsl(var(--glacier)/0.3)] to-transparent rounded-full" />
     </header>
   );
 }

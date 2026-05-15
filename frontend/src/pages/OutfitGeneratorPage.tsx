@@ -1,18 +1,34 @@
 import { useEffect, useState, useCallback } from "react";
-import { Wand2, Layers, Sparkles } from "lucide-react";
+import { Wand2, Layers, Sparkles, Flower, Sun, Leaf, Snowflake, Coffee, Briefcase, Crown, Heart, Dumbbell, Plane } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { OutfitBuilder } from "@/components/outfit/OutfitBuilder";
 import { GenerateButton } from "@/components/outfit/GenerateButton";
 import { OutfitGrid } from "@/components/outfit/OutfitGrid";
 import { OutfitPreviewModal } from "@/components/outfit/OutfitPreviewModal";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { OptionWheel, type WheelOption } from "@/components/shared/OptionWheel";
 import { useOutfitStore } from "@/stores/useOutfitStore";
 import { useWardrobeStore } from "@/stores/useWardrobeStore";
-import { OCCASION_OPTIONS, WEATHER_OPTIONS } from "@/data/styles";
-import { SEASONS } from "@/data/categories";
+
 import { cn } from "@/lib/utils";
 import type { OutfitOccasion, OutfitSlotKey, Weather } from "@/types/outfit";
 import type { Season } from "@/types/wardrobe";
+
+const OCCASION_WHEEL: WheelOption<OutfitOccasion>[] = [
+  { value: "casual", label: "Casual", Icon: Coffee },
+  { value: "work", label: "Work", Icon: Briefcase },
+  { value: "formal", label: "Formal", Icon: Crown },
+  { value: "date", label: "Date", Icon: Heart },
+  { value: "sport", label: "Sport", Icon: Dumbbell },
+  { value: "travel", label: "Travel", Icon: Plane },
+];
+
+const SEASON_WHEEL: WheelOption<Season>[] = [
+  { value: "spring", label: "Spring", Icon: Flower },
+  { value: "summer", label: "Summer", Icon: Sun },
+  { value: "fall", label: "Fall", Icon: Leaf },
+  { value: "winter", label: "Winter", Icon: Snowflake },
+];
 
 export default function OutfitGeneratorPage() {
   const {
@@ -100,21 +116,14 @@ export default function OutfitGeneratorPage() {
   const latestReasoning = pendingOutfit?.aiReasoning || outfits[0]?.aiReasoning;
 
   return (
-    <PageContainer noTopPadding>
-      <div className="mb-8">
-        <p className="text-overline mb-2">
-          AI STUDIO<span className="text-[hsl(var(--punctuation))]">.</span>
-        </p>
-        <h2 className="text-display text-4xl md:text-5xl text-[hsl(var(--peak))] mb-2">
-          Outfit Generator
-        </h2>
-        <p className="text-base text-muted-foreground">
-          AI-powered combinations<span className="text-[hsl(var(--punctuation))]">.</span>
-        </p>
+    <PageContainer>
+      <div className="mb-6">
+        <p className="kit-overline">Outfit</p>
+        <h2 className="kit-display text-3xl md:text-4xl mt-1.5">Generator</h2>
+        <p className="text-sm kit-muted mt-2">AI-powered outfit combos</p>
       </div>
 
-      {/* Tab bar */}
-      <div className="flex gap-1 p-1 rounded-xl bg-[hsl(var(--frost))] mb-6 w-fit">
+      <div className="grid grid-cols-2 gap-2 mb-6 md:flex md:w-fit">
         {[
           { key: "builder" as const, label: "Builder" },
           { key: "saved" as const, label: `Saved (${outfits.length})` },
@@ -123,10 +132,8 @@ export default function OutfitGeneratorPage() {
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              activeTab === tab.key
-                ? "bg-[hsl(var(--frost)/0.9)] shadow-sm text-foreground"
-                : "text-muted-foreground hover:text-foreground"
+              "kit-chip justify-center w-full md:w-auto",
+              activeTab === tab.key && "kit-chip-active"
             )}
           >
             {tab.label}
@@ -135,114 +142,60 @@ export default function OutfitGeneratorPage() {
       </div>
 
       {activeTab === "builder" ? (
-        <div className="space-y-6">
-          {/* Occasion selector */}
-          <div>
-            <label className="text-sm font-medium mb-2 block">
-              Occasion<span className="text-[hsl(var(--punctuation))]">:</span>
-            </label>
-            <div className="flex gap-2 flex-wrap">
-              {OCCASION_OPTIONS.map((o) => (
-                <button
-                  key={o.value}
-                  onClick={() => setOccasion(o.value as OutfitOccasion)}
-                  className={cn(
-                    "px-4 py-2 rounded-xl text-sm font-medium transition-all border",
-                    occasion === o.value
-                      ? "bg-[hsl(var(--glacier))] text-white border-transparent"
-                      : "bg-[hsl(var(--frost)/0.5)] text-muted-foreground border-[hsl(var(--border)/0.4)] hover:bg-[hsl(var(--frost))]"
-                  )}
-                >
-                  {o.label}
-                </button>
-              ))}
+        <div className="space-y-8">
+          <div className="grid gap-8 md:grid-cols-2 md:items-start">
+            <div className="flex flex-col items-center gap-3">
+              <p className="kit-overline self-center">Occasion</p>
+              <OptionWheel
+                options={OCCASION_WHEEL}
+                value={occasion}
+                onChange={(v) => setOccasion(v)}
+                size={280}
+              />
             </div>
-          </div>
 
-          {/* Weather selector */}
-          <div>
-            <label className="text-sm font-medium mb-2 block">
-              Weather <span className="text-xs text-muted-foreground">(optional)</span>
-              <span className="text-[hsl(var(--punctuation))]">:</span>
-            </label>
-            <div className="flex gap-2 flex-wrap">
-              {WEATHER_OPTIONS.map((w) => (
-                <button
-                  key={w.value}
-                  onClick={() => setWeather(weather === w.value ? null : w.value as Weather)}
-                  className={cn(
-                    "px-4 py-2 rounded-xl text-sm font-medium transition-all border",
-                    weather === w.value
-                      ? "bg-[hsl(var(--glacier))] text-white border-transparent"
-                      : "bg-[hsl(var(--frost)/0.5)] text-muted-foreground border-[hsl(var(--border)/0.4)] hover:bg-[hsl(var(--frost))]"
-                  )}
-                >
-                  {w.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Season selector */}
-          <div>
-            <label className="text-sm font-medium mb-2 block">
-              Season<span className="text-[hsl(var(--punctuation))]">:</span>
-            </label>
-            <div className="flex gap-2 flex-wrap">
-              {SEASONS.map((s) => (
-                <button
-                  key={s.value}
-                  onClick={() => setSeason(s.value as Season)}
-                  className={cn(
-                    "px-4 py-2 rounded-xl text-sm font-medium transition-all border",
-                    season === s.value
-                      ? "bg-[hsl(var(--glacier))] text-white border-transparent"
-                      : "bg-[hsl(var(--frost)/0.5)] text-muted-foreground border-[hsl(var(--border)/0.4)] hover:bg-[hsl(var(--frost))]"
-                  )}
-                >
-                  {s.label}
-                </button>
-              ))}
+            <div className="flex flex-col items-center gap-3">
+              <p className="kit-overline self-center">Season</p>
+              <OptionWheel
+                options={SEASON_WHEEL}
+                value={season}
+                onChange={setSeason}
+                center={{ value: "all", label: "All" }}
+                size={260}
+              />
             </div>
           </div>
 
           {/* Free-text input */}
           <div>
-            <label className="text-sm font-medium mb-2 block">
-              Custom request <span className="text-xs text-muted-foreground">(optional)</span>
-              <span className="text-[hsl(var(--punctuation))]">:</span>
+            <label className="kit-overline block mb-2">
+              Custom request <span className="text-xs kit-muted">(optional)</span>
             </label>
             <input
               type="text"
               value={freeText}
               onChange={(e) => setFreeText(e.target.value)}
               placeholder="e.g., I want something with a pop of red, cozy evening vibe..."
-              className="w-full px-4 py-3 rounded-xl bg-[hsl(var(--frost)/0.6)] border border-[hsl(var(--border)/0.4)] text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--glacier)/0.3)]"
+              className="kit-input w-full"
             />
           </div>
 
-          {/* Outfit Builder Slots */}
-          <OutfitBuilder
-            currentBuild={currentBuild}
-            onSlotClick={handleSlotClick}
-            isGenerating={isGenerating}
-          />
-
           {/* Error banner */}
           {error && (
-            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-600">
+            <div className="p-3 rounded-xl border border-[hsl(var(--sidebar-danger)/0.4)] bg-[hsl(var(--sidebar-danger)/0.08)] text-sm text-[hsl(var(--sidebar-danger))]">
               {error}
             </div>
           )}
 
-          {/* AI Reasoning */}
+          <OutfitBuilder currentBuild={currentBuild} onSlotClick={handleSlotClick} isGenerating={isGenerating} />
+
           {currentBuild.top && !isGenerating && (
-            <div className="bg-[hsl(var(--frost)/0.7)] backdrop-blur-xl border border-[hsl(var(--border)/0.4)] rounded-2xl p-4 shadow-[0_4px_24px_-2px_hsl(210_80%_60%/0.12)]">
+            <div className="kit-card p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Wand2 className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium">AI Reasoning</span>
+                <Wand2 className="w-4 h-4 text-[hsl(var(--sidebar-accent))]" />
+                <span className="kit-overline">AI Reasoning</span>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-sm kit-muted leading-relaxed">
                 {latestReasoning || "Generate an outfit to see AI reasoning."}
               </p>
             </div>
@@ -259,7 +212,7 @@ export default function OutfitGeneratorPage() {
             <button
               onClick={handleSurpriseMe}
               disabled={isGenerating || items.length < 3}
-              className="w-full py-3 rounded-2xl border border-[hsl(var(--border)/0.4)] bg-[hsl(var(--frost)/0.5)] text-sm font-medium hover:bg-[hsl(var(--frost))] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="kit-btn-secondary w-full justify-center"
             >
               <Sparkles className="w-4 h-4" />
               Surprise Me
@@ -267,7 +220,7 @@ export default function OutfitGeneratorPage() {
           </div>
 
           {!hasEnoughItems && (
-            <p className="text-xs text-muted-foreground text-center">
+            <p className="text-xs kit-muted text-center">
               Add at least 1 top, 1 bottom, and 1 pair of shoes to generate outfits.
             </p>
           )}
