@@ -18,8 +18,8 @@ import subscriptionRoutes from './routes/subscriptions';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const allowedOrigin = process.env.FRONTEND_URL;
-app.use(cors(allowedOrigin ? { origin: allowedOrigin } : {}));
+const allowedOrigin = process.env.FRONTEND_URL || 'https://idrip.tech';
+app.use(cors({ origin: allowedOrigin, credentials: true }));
 
 // Stripe webhook must receive raw body before JSON parser
 app.use('/api/subscriptions/webhook', express.raw({ type: 'application/json' }), subscriptionWebhookRoutes);
