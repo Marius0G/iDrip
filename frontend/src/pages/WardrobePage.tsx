@@ -7,6 +7,7 @@ import { CategoryFilter } from "@/components/wardrobe/CategoryFilter";
 import { ClothingGrid } from "@/components/wardrobe/ClothingGrid";
 import { ClothingUploadDialog } from "@/components/wardrobe/ClothingUploadDialog";
 import { ClothingDetailSheet } from "@/components/wardrobe/ClothingDetailSheet";
+import { ClothingEditDialog } from "@/components/wardrobe/ClothingEditDialog";
 import { useWardrobeStore } from "@/stores/useWardrobeStore";
 import type { ClothingItem, ClothingCategory } from "@/types/wardrobe";
 
@@ -14,6 +15,7 @@ export default function WardrobePage() {
   const { loadItems, setFilter, resetFilters, getFilteredItems, filters, items } = useWardrobeStore();
   const [showUpload, setShowUpload] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null);
+  const [editingItem, setEditingItem] = useState<ClothingItem | null>(null);
 
   useEffect(() => { loadItems(); }, [loadItems]);
 
@@ -56,7 +58,12 @@ export default function WardrobePage() {
       )}
 
       <ClothingUploadDialog open={showUpload} onClose={() => setShowUpload(false)} />
-      <ClothingDetailSheet item={selectedItem} onClose={() => setSelectedItem(null)} />
+      <ClothingDetailSheet
+        item={selectedItem}
+        onClose={() => setSelectedItem(null)}
+        onEdit={(item) => { setSelectedItem(null); setEditingItem(item); }}
+      />
+      <ClothingEditDialog item={editingItem} onClose={() => setEditingItem(null)} />
     </PageContainer>
   );
 }
