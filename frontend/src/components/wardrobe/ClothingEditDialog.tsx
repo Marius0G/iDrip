@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { X, Save, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAnimatedMount } from "@/hooks/useAnimatedMount";
@@ -69,17 +69,33 @@ export function ClothingEditDialog({ item, onClose }: ClothingEditDialogProps) {
     setTimeout(onClose, 250);
   }, [startExit, onClose]);
 
-  const [name, setName] = useState(item?.name ?? "");
-  const [category, setCategory] = useState<ClothingCategory>(item?.category ?? "tops");
-  const [brand, setBrand] = useState(item?.brand ?? "");
-  const [season, setSeason] = useState<Season[]>(item?.season ?? ["all"]);
-  const [style, setStyle] = useState<string[]>(item?.style ?? []);
-  const [occasion, setOccasion] = useState<string[]>(item?.occasion ?? []);
-  const [primaryColor, setPrimaryColor] = useState(item?.primaryColor ?? "");
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState<ClothingCategory>("tops");
+  const [brand, setBrand] = useState("");
+  const [season, setSeason] = useState<Season[]>(["all"]);
+  const [style, setStyle] = useState<string[]>([]);
+  const [occasion, setOccasion] = useState<string[]>([]);
+  const [primaryColor, setPrimaryColor] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Reset all fields whenever a different item is opened (also discards unsaved changes)
+  useEffect(() => {
+    if (item) {
+      setName(item.name ?? "");
+      setCategory(item.category ?? "tops");
+      setBrand(item.brand ?? "");
+      setSeason(item.season?.length ? item.season : ["all"]);
+      setStyle(item.style ?? []);
+      setOccasion(item.occasion ?? []);
+      setPrimaryColor(item.primaryColor ?? "");
+      setImageFile(null);
+      setImagePreview(null);
+      setError(null);
+    }
+  }, [item?.id]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
