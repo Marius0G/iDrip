@@ -54,6 +54,7 @@ export const useShoppingStore = create<ShoppingState>()(
           const data = await shoppingService.getRecommendations({
             budget: budget.monthlyBudget,
             styles: selectedStyles,
+            force,
           });
           set({ recommendations: data, isLoading: false, lastLoadedAt: Date.now() });
         } catch (err) {

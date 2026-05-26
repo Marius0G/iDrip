@@ -59,7 +59,11 @@ function fingerprintWardrobe(items: WardrobeFingerprintDoc[]): string {
 
 router.get('/', async (req: Request, res: Response) => {
   const userId = req.userId!;
-  const { budget, style } = req.query;
+  const { budget, style, force } = req.query;
+  // `?force=1` (or `force=true`) bypasses the cache. The frontend Refresh
+  // button sends this so users can pull fresh AI picks without having to edit
+  // their wardrobe to bust the fingerprint.
+  const skipCache = force === '1' || force === 'true';
 
   const maxBudget = budget ? Number(budget) : undefined;
   const styles = typeof style === 'string'
@@ -80,14 +84,16 @@ router.get('/', async (req: Request, res: Response) => {
     const fingerprint = fingerprintWardrobe(wardrobe);
     const cacheKey = `${stylesPart}|${budgetBucket}|${fingerprint}`;
 
-    const cached = await RecommendationCache.findOne({ userId, cacheKey });
-    if (cached) {
-      res.json({
-        recommendations: cached.recommendations.map(toFrontendShape),
-        count: cached.recommendations.length,
-        cached: true,
-      });
-      return;
+    if (!skipCache) {
+      const cached = await RecommendationCache.findOne({ userId, cacheKey });
+      if (cached) {
+        res.json({
+          recommendations: cached.recommendations.map(toFrontendShape),
+          count: cached.recommendations.length,
+          cached: true,
+        });
+        return;
+      }
     }
 
     try {
