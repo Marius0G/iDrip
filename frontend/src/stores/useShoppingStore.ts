@@ -51,6 +51,15 @@ export const useShoppingStore = create<ShoppingState>()(
 
         set({ isLoading: true, error: null });
         try {
+          // Force refresh = clean slate: wipe every cached row for this user so
+          // stale entries from older AI versions can't leak through.
+          if (force) {
+            try {
+              await shoppingService.clearCache();
+            } catch (err) {
+              console.warn("[shoppingStore] clearCache failed, continuing with force fetch:", err);
+            }
+          }
           const data = await shoppingService.getRecommendations({
             budget: budget.monthlyBudget,
             styles: selectedStyles,

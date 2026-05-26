@@ -20,4 +20,9 @@ export const shoppingService = {
     const res = await api.get<RecommendationsResponse>(path);
     return res.recommendations;
   },
+
+  async clearCache(): Promise<number> {
+    const res = await api.delete<{ deleted: number }>("/recommendations/cache");
+    return res.deleted;
+  },
 };
