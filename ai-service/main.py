@@ -2,9 +2,9 @@ import os
 import json
 import logging
 from typing import TypedDict, List, Optional, Dict, Any, Annotated
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -12,7 +12,7 @@ from langgraph.graph import StateGraph, END
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 
-load_dotenv()
+load_dotenv(find_dotenv(usecwd=True))
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,9 +20,18 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o")
-LLM_API_KEY = os.getenv("LLM_API_KEY", os.getenv("OPENAI_API_KEY", ""))
-LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.openai.com/v1")
+LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o").strip()
+LLM_API_KEY = os.getenv("LLM_API_KEY", os.getenv("OPENAI_API_KEY", "")).strip()
+LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.openai.com/v1").strip()
+
+# Optional shared-secret between backend and ai-service. If set, all endpoints
+# require an X-Internal-Token header that matches. If unset (default), no check.
+INTERNAL_TOKEN = os.getenv("AI_SERVICE_TOKEN", "").strip()
+
+
+def _require_internal_token(token_header: Optional[str]) -> None:
+    if INTERNAL_TOKEN and token_header != INTERNAL_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid or missing internal token")
 
 app = FastAPI(title="iDrip AI Service")
 
@@ -57,6 +66,20 @@ class SearchRequest(BaseModel):
     user_id: str
     query: str
     wardrobe_items: List[Dict[str, Any]] = []
+
+
+class RecPreferences(BaseModel):
+    styles: List[str] = []
+    favorite_colors: List[str] = []
+    budget_min: float = 0
+    budget_max: float = 200
+    sizes: Optional[Dict[str, str]] = None
+
+
+class RecommendRequest(BaseModel):
+    user_id: str
+    wardrobe_items: List[Dict[str, Any]]
+    preferences: RecPreferences = RecPreferences()
 
 
 # ---------------------------------------------------------------------------
@@ -528,6 +551,57 @@ def search_wardrobe(req: SearchRequest) -> dict:
         "filters": {},
         "intent": "search_wardrobe",
     }
+
+
+@app.post("/recommend-purchases")
+def recommend_purchases(
+    req: RecommendRequest,
+    x_internal_token: Optional[str] = Header(default=None),
+) -> dict:
+    """Generate AI-curated shopping recommendations sourced from whitelisted retailers."""
+    _require_internal_token(x_internal_token)
+    if not LLM_API_KEY:
+        raise HTTPException(status_code=503, detail="AI service is not configured — set LLM_API_KEY")
+
+    from recommend_purchases import build_recommend_graph, RecState
+
+    initial: RecState = {
+        "user_id": req.user_id,
+        "wardrobe_items": req.wardrobe_items,
+        "preferences": req.preferences.model_dump(),
+        "queries": [],
+        "raw_results": [],
+        "recommendations": [],
+        "errors": [],
+    }
+
+    logger.info(
+        f"Recommend-purchases for user {req.user_id} — wardrobe={len(req.wardrobe_items)}, "
+        f"styles={req.preferences.styles}, budget_max={req.preferences.budget_max}"
+    )
+
+    try:
+        llm = get_llm(temperature=0.4)
+        agent = build_recommend_graph(llm)
+        result = agent.invoke(initial)
+    except Exception as exc:
+        logger.error(f"Recommend-purchases agent failed: {exc}")
+        raise HTTPException(status_code=500, detail=f"AI agent error: {str(exc)}")
+
+    recs = result.get("recommendations", [])
+    errors = result.get("errors", [])
+
+    if not recs and errors:
+        # Surface a 422 so the backend can fall back to mocks
+        raise HTTPException(status_code=422, detail={"errors": errors})
+
+    response: Dict[str, Any] = {
+        "recommendations": recs,
+        "count": len(recs),
+    }
+    if errors:
+        response["warnings"] = errors
+    return response
 
 
 if __name__ == "__main__":
