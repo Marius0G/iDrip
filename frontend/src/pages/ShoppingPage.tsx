@@ -23,6 +23,11 @@ export default function ShoppingPage() {
   useEffect(() => { loadRecommendations(); }, [loadRecommendations]);
 
   const filtered = getFilteredRecommendations();
+  // When budget hides every rec, the page looks broken. Detect that case so we
+  // can show a more honest empty state ("X items hidden by budget").
+  const allRecs = useShoppingStore((s) => s.recommendations);
+  const hiddenByBudget = allRecs.length - filtered.length;
+  const isBudgetEmpty = filtered.length === 0 && hiddenByBudget > 0;
 
   return (
     <PageContainer>
@@ -94,11 +99,17 @@ export default function ShoppingPage() {
                 />
               ))}
             </div>
+          ) : isBudgetEmpty ? (
+            <EmptyState
+              icon={ShoppingBag}
+              title={`${hiddenByBudget} ${hiddenByBudget === 1 ? "item is" : "items are"} hidden by your budget`}
+              description="Raise the budget slider above to see them, or refresh to find cheaper alternatives."
+            />
           ) : (
             <EmptyState
               icon={ShoppingBag}
-              title="No recommendations"
-              description="Try adjusting your budget or style preferences"
+              title="No recommendations yet"
+              description="Add a few wardrobe items, then refresh — the AI uses them to suggest pieces that complement your style."
             />
           )}
         </div>

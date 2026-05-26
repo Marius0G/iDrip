@@ -1,4 +1,4 @@
-import { X, Sparkles } from "lucide-react";
+import { X, Sparkles, ExternalLink } from "lucide-react";
 import type { ShoppingRecommendation } from "@/types/shopping";
 
 interface RecommendationCardProps {
@@ -7,12 +7,21 @@ interface RecommendationCardProps {
 }
 
 export function RecommendationCard({ recommendation, onDismiss }: RecommendationCardProps) {
-  return (
-    <div className="kit-card p-3 group transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.98]">
+  const hasLink = !!recommendation.productUrl;
+
+  const body = (
+    <>
       <div className="relative kit-thumb aspect-[4/5] mb-3">
         <img
           src={recommendation.imageUrl}
           alt={recommendation.name}
+          loading="lazy"
+          onError={(e) => {
+            const img = e.currentTarget;
+            if (img.dataset.fallback === "1") return;
+            img.dataset.fallback = "1";
+            img.src = "https://placehold.co/400x500/eeeeee/666666?text=Image+unavailable";
+          }}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
@@ -21,8 +30,19 @@ export function RecommendationCard({ recommendation, onDismiss }: Recommendation
           {recommendation.matchScore}%
         </span>
 
+        {hasLink && (
+          <span className="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <ExternalLink className="w-3.5 h-3.5" />
+          </span>
+        )}
+
         <button
-          onClick={() => onDismiss(recommendation.id)}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDismiss(recommendation.id);
+          }}
           aria-label="Dismiss"
           className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
         >
@@ -42,6 +62,25 @@ export function RecommendationCard({ recommendation, onDismiss }: Recommendation
       <p className="text-xs kit-muted mt-2 leading-relaxed line-clamp-2">
         {recommendation.reason}
       </p>
-    </div>
+    </>
   );
+
+  const className =
+    "kit-card p-3 group transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.98] block";
+
+  if (hasLink) {
+    return (
+      <a
+        href={recommendation.productUrl}
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        className={className}
+        aria-label={`Open ${recommendation.name} at ${recommendation.brand}`}
+      >
+        {body}
+      </a>
+    );
+  }
+
+  return <div className={className}>{body}</div>;
 }
