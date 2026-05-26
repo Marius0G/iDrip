@@ -73,8 +73,8 @@ export const api = {
   patch<T>(path: string, body?: unknown): Promise<T> {
     return request<T>(path, { method: 'PATCH', body: body ? JSON.stringify(body) : undefined });
   },
-  delete<T>(path: string): Promise<T> {
-    return request<T>(path, { method: 'DELETE' });
+  delete<T>(path: string, body?: unknown): Promise<T> {
+    return request<T>(path, { method: 'DELETE', body: body ? JSON.stringify(body) : undefined });
   },
   upload<T>(path: string, formData: FormData): Promise<T> {
     return request<T>(path, { method: 'POST', body: formData });

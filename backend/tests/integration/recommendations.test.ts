@@ -285,12 +285,61 @@ describe('GET /api/recommendations', () => {
 
       const res = await request(app).delete('/api/recommendations/item')
         .set(authHeader(user))
-        .send({ stableKey: item.productUrl });
+        .send({ stableKey: item.productUrl, permanent: true });
       expect(res.status).toBe(204);
 
       expect(await SavedRecommendation.countDocuments({ userId: user._id })).toBe(0);
       const dismissed = await DismissedRecommendation.findOne({ userId: user._id, stableKey: item.productUrl });
       expect(dismissed).toBeTruthy();
+      expect(dismissed?.permanent).toBe(true);
+    });
+
+    it('Hide vs Delete: only Hide surfaces in GET /hidden', async () => {
+      const user = await createTestUser();
+      const hide = { ...SAMPLE_AI_RECS[0], productUrl: 'https://a.com/hide', name: 'Hide Me' };
+      const del = { ...SAMPLE_AI_RECS[0], productUrl: 'https://a.com/del', name: 'Delete Me' };
+
+      await request(app).delete('/api/recommendations/item').set(authHeader(user))
+        .send({ stableKey: hide.productUrl, item: hide, permanent: false });
+      await request(app).delete('/api/recommendations/item').set(authHeader(user))
+        .send({ stableKey: del.productUrl, item: del, permanent: true });
+
+      const res = await request(app).get('/api/recommendations/hidden').set(authHeader(user));
+      expect(res.status).toBe(200);
+      expect(res.body.count).toBe(1);
+      expect(res.body.hidden[0].name).toBe('Hide Me');
+
+      // Both still dismissed — both filter from /recommendations
+      expect(await DismissedRecommendation.countDocuments({ userId: user._id })).toBe(2);
+    });
+
+    it('POST /hidden/:key/restore removes the dismissed record entirely', async () => {
+      const user = await createTestUser();
+      const item = SAMPLE_AI_RECS[0];
+      await request(app).delete('/api/recommendations/item').set(authHeader(user))
+        .send({ stableKey: item.productUrl, item, permanent: false });
+
+      const res = await request(app).post(`/api/recommendations/hidden/${encodeURIComponent(item.productUrl)}/restore`)
+        .set(authHeader(user));
+      expect(res.status).toBe(204);
+      expect(await DismissedRecommendation.countDocuments({ userId: user._id })).toBe(0);
+    });
+
+    it('POST /hidden/:key/delete-forever marks permanent (still filters AI, no longer visible)', async () => {
+      const user = await createTestUser();
+      const item = SAMPLE_AI_RECS[0];
+      await request(app).delete('/api/recommendations/item').set(authHeader(user))
+        .send({ stableKey: item.productUrl, item, permanent: false });
+
+      const res = await request(app).post(`/api/recommendations/hidden/${encodeURIComponent(item.productUrl)}/delete-forever`)
+        .set(authHeader(user));
+      expect(res.status).toBe(204);
+
+      const dismissed = await DismissedRecommendation.findOne({ userId: user._id, stableKey: item.productUrl });
+      expect(dismissed?.permanent).toBe(true);
+
+      const list = await request(app).get('/api/recommendations/hidden').set(authHeader(user));
+      expect(list.body.count).toBe(0);
     });
 
     it('dismissed items are filtered out of subsequent /recommendations responses', async () => {

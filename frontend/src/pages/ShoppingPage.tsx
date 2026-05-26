@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ShoppingBag, RefreshCw, Loader2, Bookmark } from "lucide-react";
+import { ShoppingBag, RefreshCw, Loader2, Bookmark, EyeOff } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { BudgetSlider } from "@/components/shopping/BudgetSlider";
 import { StyleTagSelector } from "@/components/shopping/StyleTagSelector";
@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { useShoppingStore } from "@/stores/useShoppingStore";
 import { cn } from "@/lib/utils";
 
-type Tab = "spotlight" | "saved";
+type Tab = "spotlight" | "saved" | "hidden";
 
 export default function ShoppingPage() {
   const {
@@ -16,14 +16,20 @@ export default function ShoppingPage() {
     selectedStyles,
     isLoading,
     isSavedLoading,
+    isHiddenLoading,
     error,
     saved,
+    hidden,
     loadRecommendations,
     loadSaved,
+    loadHidden,
     setBudget,
     toggleStyle,
     saveRecommendation,
+    hideRecommendation,
     deleteRecommendation,
+    restoreHidden,
+    deleteHiddenForever,
     getFilteredRecommendations,
   } = useShoppingStore();
 
@@ -32,7 +38,8 @@ export default function ShoppingPage() {
   useEffect(() => { loadRecommendations(); }, [loadRecommendations]);
   useEffect(() => {
     if (tab === "saved") loadSaved();
-  }, [tab, loadSaved]);
+    if (tab === "hidden") loadHidden();
+  }, [tab, loadSaved, loadHidden]);
 
   const filtered = getFilteredRecommendations();
   const allRecs = useShoppingStore((s) => s.recommendations);
@@ -63,29 +70,33 @@ export default function ShoppingPage() {
         </div>
 
         <div role="tablist" className="inline-flex p-1 rounded-full bg-[hsl(var(--frost)/0.5)] border border-[hsl(var(--border)/0.4)]">
-          {(["spotlight", "saved"] as Tab[]).map((t) => (
-            <button
-              key={t}
-              role="tab"
-              type="button"
-              aria-selected={tab === t}
-              onClick={() => setTab(t)}
-              className={cn(
-                "px-4 py-1.5 text-sm rounded-full transition-colors",
-                tab === t
-                  ? "bg-[hsl(var(--glacier))] text-white"
-                  : "kit-muted hover:bg-[hsl(var(--frost)/0.7)]"
-              )}
-            >
-              {t === "spotlight" ? "Spotlight" : "Saved"}
-              {t === "saved" && saved.length > 0 && (
-                <span className="ml-1.5 text-xs opacity-80">{saved.length}</span>
-              )}
-            </button>
-          ))}
+          {(["spotlight", "saved", "hidden"] as Tab[]).map((t) => {
+            const count = t === "saved" ? saved.length : t === "hidden" ? hidden.length : 0;
+            const label = t === "spotlight" ? "Spotlight" : t === "saved" ? "Saved" : "Hidden";
+            return (
+              <button
+                key={t}
+                role="tab"
+                type="button"
+                aria-selected={tab === t}
+                onClick={() => setTab(t)}
+                className={cn(
+                  "px-4 py-1.5 text-sm rounded-full transition-colors",
+                  tab === t
+                    ? "bg-[hsl(var(--glacier))] text-white"
+                    : "kit-muted hover:bg-[hsl(var(--frost)/0.7)]"
+                )}
+              >
+                {label}
+                {count > 0 && (
+                  <span className="ml-1.5 text-xs opacity-80">{count}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        {tab === "spotlight" ? (
+        {tab === "spotlight" && (
           <SpotlightSection
             recs={filtered}
             isLoading={isLoading}
@@ -94,13 +105,24 @@ export default function ShoppingPage() {
             isBudgetEmpty={isBudgetEmpty}
             onRefresh={() => loadRecommendations(true)}
             onSave={saveRecommendation}
+            onHide={(id) => hideRecommendation(id, "spotlight")}
             onDelete={(id) => deleteRecommendation(id, "spotlight")}
           />
-        ) : (
+        )}
+        {tab === "saved" && (
           <SavedSection
             saved={saved}
             isLoading={isSavedLoading}
+            onHide={(id) => hideRecommendation(id, "saved")}
             onDelete={(id) => deleteRecommendation(id, "saved")}
+          />
+        )}
+        {tab === "hidden" && (
+          <HiddenSection
+            hidden={hidden}
+            isLoading={isHiddenLoading}
+            onRestore={restoreHidden}
+            onDeleteForever={deleteHiddenForever}
           />
         )}
       </div>
@@ -116,11 +138,12 @@ interface SpotlightSectionProps {
   isBudgetEmpty: boolean;
   onRefresh: () => void;
   onSave: (id: string) => void;
+  onHide: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
 function SpotlightSection({
-  recs, isLoading, error, hiddenByBudget, isBudgetEmpty, onRefresh, onSave, onDelete,
+  recs, isLoading, error, hiddenByBudget, isBudgetEmpty, onRefresh, onSave, onHide, onDelete,
 }: SpotlightSectionProps) {
   return (
     <div>
@@ -168,6 +191,7 @@ function SpotlightSection({
               recommendation={rec}
               variant="spotlight"
               onSave={onSave}
+              onHide={onHide}
               onDelete={onDelete}
             />
           ))}
@@ -186,10 +210,51 @@ function SpotlightSection({
 interface SavedSectionProps {
   saved: ReturnType<typeof useShoppingStore.getState>["saved"];
   isLoading: boolean;
+  onHide: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
-function SavedSection({ saved, isLoading, onDelete }: SavedSectionProps) {
+interface HiddenSectionProps {
+  hidden: ReturnType<typeof useShoppingStore.getState>["hidden"];
+  isLoading: boolean;
+  onRestore: (stableKey: string) => void;
+  onDeleteForever: (stableKey: string) => void;
+}
+
+function HiddenSection({ hidden, isLoading, onRestore, onDeleteForever }: HiddenSectionProps) {
+  if (isLoading && hidden.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-12 kit-muted text-sm gap-2">
+        <Loader2 className="size-4 animate-spin" />
+        Loading hidden picks…
+      </div>
+    );
+  }
+  if (hidden.length === 0) {
+    return (
+      <EmptyState
+        icon={EyeOff}
+        title="Nothing hidden"
+        description="Items you delete from Spotlight or Saved will appear here. You can restore them at any time."
+      />
+    );
+  }
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {hidden.map((rec) => (
+        <RecommendationCard
+          key={rec.stableKey}
+          recommendation={rec}
+          variant="hidden"
+          onRestore={() => onRestore(rec.stableKey)}
+          onDelete={() => onDeleteForever(rec.stableKey)}
+        />
+      ))}
+    </div>
+  );
+}
+
+function SavedSection({ saved, isLoading, onHide, onDelete }: SavedSectionProps) {
   if (isLoading && saved.length === 0) {
     return (
       <div className="flex items-center justify-center py-12 kit-muted text-sm gap-2">
@@ -214,6 +279,7 @@ function SavedSection({ saved, isLoading, onDelete }: SavedSectionProps) {
           key={rec.id || rec.productUrl || rec.name}
           recommendation={rec}
           variant="saved"
+          onHide={onHide}
           onDelete={onDelete}
         />
       ))}
