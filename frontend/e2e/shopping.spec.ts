@@ -9,14 +9,12 @@ const SAMPLE_RECS = [
 test.describe('Shopping page', () => {
   test('renders the page heading + budget slider when recs are seeded', async ({ page }) => {
     await seedAuthenticatedUser(page);
-    await mockBackendDefaults(page);
-    // useShoppingStore loads its data from a local mock file, not from the API,
-    // so we seed its persisted state directly to get deterministic test data.
+    // useShoppingStore fetches from /api/recommendations on mount, so the mock
+    // route is the source of truth. Local-store seeding is only for prefs.
+    await mockBackendDefaults(page, { recommendations: SAMPLE_RECS });
     await seedPersistedStore(page, 'idrip-shopping', {
-      recommendations: SAMPLE_RECS,
       budget: { monthlyBudget: 500, spent: 0, currency: 'USD' },
       selectedStyles: [],
-      isLoading: false,
     });
     await page.goto('/shopping');
 
@@ -27,12 +25,10 @@ test.describe('Shopping page', () => {
 
   test('renders empty state when budget remaining is too low for any rec', async ({ page }) => {
     await seedAuthenticatedUser(page);
-    await mockBackendDefaults(page);
+    await mockBackendDefaults(page, { recommendations: SAMPLE_RECS });
     await seedPersistedStore(page, 'idrip-shopping', {
-      recommendations: SAMPLE_RECS,
       budget: { monthlyBudget: 10, spent: 0, currency: 'USD' }, // below cheapest rec
       selectedStyles: [],
-      isLoading: false,
     });
     await page.goto('/shopping');
 

@@ -32,15 +32,22 @@ TAVILY_KEY = os.getenv("TAVILY_KEY", "").strip()
 # Retailer whitelist — anything outside this set is filtered out.
 # Key: lowercase domain root. Value: human-friendly brand label.
 RETAILER_WHITELIST: Dict[str, str] = {
+    # First-party retailers
     "nike.com": "Nike",
     "adidas.com": "Adidas",
     "zara.com": "Zara",
     "asos.com": "ASOS",
     "uniqlo.com": "Uniqlo",
     "hm.com": "H&M",
-    "www2.hm.com": "H&M",
     "cosstores.com": "COS",
     "everlane.com": "Everlane",
+    # Secondhand / resale marketplaces (broaden coverage for jerseys, vintage,
+    # streetwear that the first-party set above doesn't carry second-season).
+    "vinted.com": "Vinted",
+    "vinted.co.uk": "Vinted",
+    "depop.com": "Depop",
+    "grailed.com": "Grailed",
+    "ebay.com": "eBay",
 }
 ALLOWED_DOMAINS = sorted(set(RETAILER_WHITELIST.keys()))
 
@@ -66,20 +73,28 @@ class RecState(TypedDict):
 # Helpers
 # ---------------------------------------------------------------------------
 def _summarize_wardrobe(items: List[Dict[str, Any]]) -> str:
-    """Compact wardrobe summary for the LLM prompt."""
+    """Compact wardrobe summary for the LLM prompt — includes brand + tags so
+    the LLM can pick up affinities (e.g. a user with multiple Barça shirts
+    likely wants more Barça-aligned recs)."""
     by_cat: Dict[str, List[str]] = {}
     for it in items:
         cat = str(it.get("category", "other"))
         name = str(it.get("name", "item"))
         color = it.get("primaryColor", "")
+        brand = str(it.get("brand", "")).strip()
         style = ",".join(it.get("style", [])[:2]) if isinstance(it.get("style"), list) else ""
+        tags = ",".join(it.get("tags", [])[:3]) if isinstance(it.get("tags"), list) else ""
         bits = [name]
+        if brand:
+            bits.append(f"{{brand: {brand}}}")
         if color:
             bits.append(f"({color})")
         if style:
-            bits.append(f"[{style}]")
+            bits.append(f"[style: {style}]")
+        if tags:
+            bits.append(f"[tags: {tags}]")
         by_cat.setdefault(cat, []).append(" ".join(bits))
-    return "\n".join(f"- {cat}: {', '.join(names[:8])}" for cat, names in by_cat.items())
+    return "\n".join(f"- {cat}: {'; '.join(names[:8])}" for cat, names in by_cat.items())
 
 
 def _extract_json(text: str) -> Optional[Any]:
@@ -132,22 +147,27 @@ def _domain_in_whitelist(url: str) -> Optional[str]:
 GAP_ANALYSIS_PROMPT = """You are a fashion stylist analyzing a client's wardrobe to recommend purchases.
 
 Given:
-- The client's existing wardrobe (by category)
+- The client's existing wardrobe (by category, with brand and tags per item)
 - Their preferred styles (e.g., minimalist, streetwear)
 - Their budget ceiling per item
 
-Output 3-4 specific shopping queries that fill GAPS or REINFORCE their look. Each query should be a short, concrete product description like a human would type into a clothing site search.
+Output 3-4 specific shopping queries that either FILL GAPS or REINFORCE strong signals already in the wardrobe.
 
-Rules:
-- Each query is 3-6 words, lowercase, no punctuation
-- Match the client's styles
+Personalization signals to PAY ATTENTION TO:
+- **Recurring brands** — if the client has multiple Nike pieces, lean into Nike. If multiple Zara, lean into Zara.
+- **Themes in tags or names** — e.g., "barca" / "fc barcelona", a sports team, a music artist, a specific subculture (techwear, gorpcore, y2k). Reinforce these explicitly in the query when present.
+- **Color palette** — match or complement the dominant tones.
+
+Output rules:
+- Each query is 3-7 words, lowercase, no punctuation
+- Bake brand/theme into the query when the signal is strong (e.g. "fc barcelona jersey 25 26", "nike tech fleece pants")
 - Stay realistic for the budget (don't recommend $500 items if budget is $80)
-- Prefer items that pair with multiple pieces they already own
-- Don't suggest items they already have a lot of
+- Mix: 1-2 queries should fill a gap, 1-2 should reinforce a recurring signal
+- Don't repeat items the client already has
 
 Return ONLY a JSON array of objects with this exact shape:
 [
-  {"query": "white linen shirt men", "target_category": "tops", "max_price": 60, "rationale": "missing summer layering piece"}
+  {"query": "fc barcelona home jersey", "target_category": "tops", "max_price": 80, "rationale": "client owns 2 barca items — reinforce theme"}
 ]
 """
 
@@ -372,10 +392,14 @@ def rank_and_explain(state: RecState, llm) -> RecState:
     except Exception as exc:
         logger.error(f"rank_and_explain failed: {exc}")
         state["errors"].append(f"Ranking failed: {exc}")
-        # Degrade gracefully — return top N by price ascending with generic reasons
-        recs = []
-        for i, r in enumerate(raw[:FINAL_RECOMMENDATIONS]):
-            recs.append(_finalize_rec(f"rec-{i}", r, 75, f"Matches your search for {r.get('query', 'this item')}"))
+        # Degrade gracefully — return top N with generic reasons, skipping price-less rows.
+        recs: List[Dict[str, Any]] = []
+        for i, r in enumerate(raw):
+            fin = _finalize_rec(f"rec-{i}", r, 75, f"Matches your search for {r.get('query', 'this item')}")
+            if fin is not None:
+                recs.append(fin)
+            if len(recs) >= FINAL_RECOMMENDATIONS:
+                break
         state["recommendations"] = recs
         return state
 
@@ -395,21 +419,38 @@ def rank_and_explain(state: RecState, llm) -> RecState:
         except (TypeError, ValueError):
             score = 80
         reason = str(pick.get("reason", "")).strip() or "Fits your style and budget"
-        recs.append(_finalize_rec(f"rec-{j}", raw_item, score, reason))
+        fin = _finalize_rec(f"rec-{j}", raw_item, score, reason)
+        if fin is not None:
+            recs.append(fin)
 
     state["recommendations"] = recs[:FINAL_RECOMMENDATIONS]
     logger.info(f"rank_and_explain finalized {len(state['recommendations'])} recommendations")
     return state
 
 
-def _finalize_rec(rec_id: str, raw: Dict[str, Any], score: int, reason: str) -> Dict[str, Any]:
+def _finalize_rec(rec_id: str, raw: Dict[str, Any], score: int, reason: str) -> Optional[Dict[str, Any]]:
+    """Build the final recommendation. Returns None for rows missing critical
+    fields — price (Tavily fallback often lacks it) or a real image (placeholder
+    cards look broken in the UI). Dropping early keeps the cache clean."""
+    price_val = raw.get("price")
+    try:
+        price = float(price_val) if price_val is not None else 0.0
+    except (TypeError, ValueError):
+        price = 0.0
+    if price <= 0:
+        return None
+
+    image = (raw.get("image") or "").strip()
+    if not image or image.startswith("https://placehold.co"):
+        return None
+
     return {
         "id": rec_id,
         "name": raw.get("title", "Product")[:120],
         "brand": raw.get("brand", ""),
         "category": raw.get("target_category", "") or "tops",
-        "price": float(raw.get("price") or 0),
-        "imageUrl": raw.get("image", "") or "https://placehold.co/400x500/cccccc/111111?text=No+Image",
+        "price": price,
+        "imageUrl": image,
         "matchScore": score,
         "matchReason": reason,
         "description": (raw.get("snippet") or raw.get("title", ""))[:200],

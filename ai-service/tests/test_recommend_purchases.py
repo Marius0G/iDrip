@@ -174,6 +174,7 @@ class TestFinalizeRec:
             "snippet": "Breathable summer shirt.",
         }
         rec = rp._finalize_rec("rec-1", raw, 92, "Pairs with your jeans")
+        assert rec is not None
         assert rec["id"] == "rec-1"
         assert rec["name"] == "White Linen Shirt"
         assert rec["brand"] == "Uniqlo"
@@ -183,10 +184,28 @@ class TestFinalizeRec:
         assert rec["matchReason"] == "Pairs with your jeans"
         assert rec["productUrl"] == "https://uniqlo.com/x"
 
-    def test_falls_back_to_placeholder_image(self):
+    def test_drops_priceless_rows(self):
+        """Tavily fallback results have no price — they would always pass the
+        frontend budget filter, so they must be dropped at the source."""
         import recommend_purchases as rp
-        rec = rp._finalize_rec("r1", {"title": "x", "brand": "Nike", "target_category": "shoes", "price": 50}, 80, "fits")
-        assert "placehold.co" in rec["imageUrl"]
+        assert rp._finalize_rec("r1", {"title": "x", "brand": "ASOS", "target_category": "tops", "price": None}, 80, "fits") is None
+        assert rp._finalize_rec("r2", {"title": "x", "brand": "ASOS", "target_category": "tops", "price": 0}, 80, "fits") is None
+        assert rp._finalize_rec("r3", {"title": "x", "brand": "ASOS", "target_category": "tops"}, 80, "fits") is None
+
+    def test_drops_rows_without_real_image(self):
+        """Placeholder images make the grid look broken — drop rows with no image."""
+        import recommend_purchases as rp
+        base = {"title": "x", "brand": "Nike", "target_category": "shoes", "price": 50, "url": "https://nike.com/x"}
+        # Missing
+        assert rp._finalize_rec("r1", base, 80, "fits") is None
+        # Empty string
+        assert rp._finalize_rec("r2", {**base, "image": ""}, 80, "fits") is None
+        # placehold.co URL is a known placeholder
+        assert rp._finalize_rec("r3", {**base, "image": "https://placehold.co/400x500/cccccc/000000?text=No+Image"}, 80, "fits") is None
+        # Real CDN image passes
+        rec = rp._finalize_rec("r4", {**base, "image": "https://static.nike.com/a/images/x.png"}, 80, "fits")
+        assert rec is not None
+        assert rec["imageUrl"] == "https://static.nike.com/a/images/x.png"
 
 
 # ---------------------------------------------------------------------------

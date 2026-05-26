@@ -11,6 +11,7 @@ export interface ShoppingRecommendation {
   matchScore: number;
   brand: string;
   tags: string[];
+  productUrl?: string;
 }
 
 export interface BudgetSettings {
