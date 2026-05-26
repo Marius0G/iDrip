@@ -169,7 +169,7 @@ class TestFinalizeRec:
             "brand": "Uniqlo",
             "target_category": "tops",
             "price": 40.0,
-            "image": "https://example.com/i.jpg",
+            "image": "https://image.uniqlo.com/i.jpg",
             "url": "https://uniqlo.com/x",
             "snippet": "Breathable summer shirt.",
         }
@@ -206,6 +206,44 @@ class TestFinalizeRec:
         rec = rp._finalize_rec("r4", {**base, "image": "https://static.nike.com/a/images/x.png"}, 80, "fits")
         assert rec is not None
         assert rec["imageUrl"] == "https://static.nike.com/a/images/x.png"
+
+    def test_drops_rows_with_brand_image_mismatch(self):
+        """SerpAPI sometimes assigns the wrong thumbnail. Drop rows where the
+        image is hosted on a domain that doesn't match the brand."""
+        import recommend_purchases as rp
+        # Zara product with an H&M image (real prod example) — reject
+        assert rp._finalize_rec(
+            "r1",
+            {"title": "Zara Chinos", "brand": "Zara", "target_category": "bottoms", "price": 70,
+             "url": "https://zara.com/x", "image": "https://image.hm.com/assets/x.jpg"},
+            85, "fits"
+        ) is None
+        # Uniqlo product with a Zara CDN image — reject
+        assert rp._finalize_rec(
+            "r2",
+            {"title": "Uniqlo Belt", "brand": "Uniqlo", "target_category": "accessories", "price": 25,
+             "url": "https://uniqlo.com/x", "image": "https://static.zara.net/y.jpg"},
+            85, "fits"
+        ) is None
+        # Zara product with a real Zara CDN image — accept
+        rec = rp._finalize_rec(
+            "r3",
+            {"title": "Zara Knit", "brand": "Zara", "target_category": "tops", "price": 80,
+             "url": "https://zara.com/x", "image": "https://static.zara.net/y.jpg"},
+            85, "fits"
+        )
+        assert rec is not None
+
+    def test_marketplace_image_check_is_relaxed(self):
+        """Vinted/Depop/Grailed/eBay carry seller-uploaded images — accept any host."""
+        import recommend_purchases as rp
+        rec = rp._finalize_rec(
+            "r1",
+            {"title": "Vintage Barça Jersey", "brand": "Vinted", "target_category": "tops", "price": 35,
+             "url": "https://vinted.com/items/x", "image": "https://i.ebayimg.com/whatever.jpg"},
+            85, "fits"
+        )
+        assert rec is not None
 
 
 # ---------------------------------------------------------------------------

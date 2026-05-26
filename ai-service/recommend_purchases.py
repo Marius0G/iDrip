@@ -51,6 +51,37 @@ RETAILER_WHITELIST: Dict[str, str] = {
 }
 ALLOWED_DOMAINS = sorted(set(RETAILER_WHITELIST.keys()))
 
+# Image CDN hostnames per brand. SerpAPI's google_shopping engine sometimes
+# mixes thumbnails between adjacent rows (Zara product / H&M image), so we
+# reject rows where the image host isn't associated with the brand.
+# Marketplaces are exempt (sellers upload from anywhere).
+BRAND_IMAGE_HOSTS: Dict[str, List[str]] = {
+    "Nike": ["nike.com", "nike.net"],
+    "Adidas": ["adidas.com"],
+    "Zara": ["zara.net", "zara.com"],
+    "ASOS": ["asos-media.com", "asos.com"],
+    "Uniqlo": ["uniqlo.com"],
+    "H&M": ["hm.com", "hmgoepprod.com"],
+    "COS": ["cosstores.com", "cos.com"],
+    "Everlane": ["everlane.com"],
+    "Vinted": [],
+    "Depop": [],
+    "Grailed": [],
+    "eBay": [],
+}
+
+
+def _image_matches_brand(image_url: str, brand: str) -> bool:
+    """True if the image is on a CDN associated with the brand (or the brand is
+    a marketplace with no canonical image host)."""
+    hosts = BRAND_IMAGE_HOSTS.get(brand)
+    if hosts is None:
+        return True  # unknown brand — don't gate
+    if not hosts:
+        return True  # marketplace — accept any seller-uploaded image
+    host = (urlparse(image_url).hostname or "").lower()
+    return any(h in host for h in hosts)
+
 MAX_QUERIES = 4
 RESULTS_PER_QUERY = 20
 FINAL_RECOMMENDATIONS = 8
@@ -444,6 +475,14 @@ def _finalize_rec(rec_id: str, raw: Dict[str, Any], score: int, reason: str) -> 
     parsed_image = urlparse(image) if image else None
     image_host = (parsed_image.hostname or "").lower() if parsed_image else ""
     if not image or image_host == "placehold.co" or image_host.endswith(".placehold.co"):
+        return None
+
+    # Reject rows where the image host doesn't match the brand — SerpAPI sometimes
+    # cross-contaminates thumbnails between adjacent shopping results (e.g. a Zara
+    # product card with an H&M image). Without this check those cards look broken
+    # even though the rest of the fields are correct.
+    brand = raw.get("brand", "")
+    if not _image_matches_brand(image, brand):
         return None
 
     return {
