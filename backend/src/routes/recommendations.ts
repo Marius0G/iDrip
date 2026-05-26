@@ -156,4 +156,13 @@ router.get('/', async (req: Request, res: Response) => {
   });
 });
 
+// Wipe all cached recommendations for the current user. Used by the "Refresh"
+// button so a single click guarantees a clean regeneration across every
+// (style, budget, fingerprint) combo — not just the one currently in view.
+router.delete('/cache', async (req: Request, res: Response) => {
+  const userId = req.userId!;
+  const result = await RecommendationCache.deleteMany({ userId });
+  res.json({ deleted: result.deletedCount ?? 0 });
+});
+
 export default router;
