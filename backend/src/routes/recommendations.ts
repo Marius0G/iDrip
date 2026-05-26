@@ -4,6 +4,14 @@ import { generateRecommendationsAI } from '../services/aiRecommendationService';
 import WardrobeItem from '../models/WardrobeItem';
 import User from '../models/User';
 import RecommendationCache from '../models/RecommendationCache';
+import SavedRecommendation from '../models/SavedRecommendation';
+import DismissedRecommendation from '../models/DismissedRecommendation';
+
+// Stable identity for a recommendation across regenerations — productUrl
+// when available, otherwise the name (matches the frontend's dismissKey).
+function stableKeyOf(r: { productUrl?: string; name: string }): string {
+  return (r.productUrl && r.productUrl.trim()) || r.name;
+}
 
 const router = Router();
 
@@ -110,20 +118,26 @@ router.get('/', async (req: Request, res: Response) => {
       });
 
       if (aiRecs.length > 0) {
+        // Filter out anything the user has permanently dismissed.
+        const dismissedKeys = new Set(
+          (await DismissedRecommendation.find({ userId }).select('stableKey').lean()).map((d) => d.stableKey)
+        );
+        const filtered = aiRecs.filter((r) => !dismissedKeys.has(stableKeyOf(r)));
+
         // Upsert: a parallel request may have populated the same key already.
         await RecommendationCache.findOneAndUpdate(
           { userId, cacheKey },
           {
             userId,
             cacheKey,
-            recommendations: aiRecs,
+            recommendations: filtered,
             expiresAt: new Date(Date.now() + CACHE_TTL_HOURS * 60 * 60 * 1000),
           },
           { upsert: true, new: true }
         );
         res.json({
-          recommendations: aiRecs.map(toFrontendShape),
-          count: aiRecs.length,
+          recommendations: filtered.map(toFrontendShape),
+          count: filtered.length,
           cached: false,
         });
         return;
@@ -163,6 +177,61 @@ router.delete('/cache', async (req: Request, res: Response) => {
   const userId = req.userId!;
   const result = await RecommendationCache.deleteMany({ userId });
   res.json({ deleted: result.deletedCount ?? 0 });
+});
+
+// Save an item from the spotlight to the user's history. The full rec is
+// stored (LLM-assigned spotlight `id`s rotate, so we can't reference by id).
+router.post('/save', async (req: Request, res: Response) => {
+  const userId = req.userId!;
+  const item = req.body?.item;
+  if (!item || !item.name) {
+    res.status(400).json({ error: 'item is required' });
+    return;
+  }
+  const stableKey = stableKeyOf(item);
+  const saved = await SavedRecommendation.findOneAndUpdate(
+    { userId, stableKey },
+    { userId, stableKey, item, savedAt: new Date() },
+    { upsert: true, new: true }
+  );
+  res.status(201).json({ saved: { stableKey, savedAt: saved.savedAt } });
+});
+
+// User's saved-to-history items, most-recent first.
+router.get('/saved', async (req: Request, res: Response) => {
+  const userId = req.userId!;
+  const limit = Math.min(Number(req.query.limit) || 50, 200);
+  const items = await SavedRecommendation.find({ userId }).sort({ savedAt: -1 }).limit(limit).lean();
+  res.json({
+    saved: items.map((s) => ({ ...toFrontendShape(s.item as never), savedAt: s.savedAt })),
+    count: items.length,
+  });
+});
+
+// Permanently dismiss an item. Removes it from saved if present and adds to
+// the dismissed list so future AI generations exclude it.
+router.delete('/item', async (req: Request, res: Response) => {
+  const userId = req.userId!;
+  const stableKey: string | undefined = req.body?.stableKey || req.query.stableKey as string | undefined;
+  if (!stableKey) {
+    res.status(400).json({ error: 'stableKey is required' });
+    return;
+  }
+  await Promise.all([
+    DismissedRecommendation.findOneAndUpdate(
+      { userId, stableKey },
+      { userId, stableKey, dismissedAt: new Date() },
+      { upsert: true, new: true }
+    ),
+    SavedRecommendation.deleteOne({ userId, stableKey }),
+    // Pull any cached spotlight rows that reference this stableKey so a fresh
+    // GET doesn't immediately re-serve it from cache.
+    RecommendationCache.updateMany(
+      { userId },
+      { $pull: { recommendations: { $or: [{ productUrl: stableKey }, { name: stableKey }] } } as never }
+    ),
+  ]);
+  res.status(204).send();
 });
 
 export default router;

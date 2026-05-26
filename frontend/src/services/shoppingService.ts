@@ -6,6 +6,11 @@ interface RecommendationsResponse {
   count: number;
 }
 
+interface SavedResponse {
+  saved: ShoppingRecommendation[];
+  count: number;
+}
+
 export const shoppingService = {
   async getRecommendations(params: {
     budget?: number;
@@ -24,5 +29,18 @@ export const shoppingService = {
   async clearCache(): Promise<number> {
     const res = await api.delete<{ deleted: number }>("/recommendations/cache");
     return res.deleted;
+  },
+
+  async saveItem(item: ShoppingRecommendation): Promise<void> {
+    await api.post<{ saved: { stableKey: string; savedAt: string } }>("/recommendations/save", { item });
+  },
+
+  async getSaved(): Promise<ShoppingRecommendation[]> {
+    const res = await api.get<SavedResponse>("/recommendations/saved");
+    return res.saved;
+  },
+
+  async deleteItem(stableKey: string): Promise<void> {
+    await api.delete<void>(`/recommendations/item?stableKey=${encodeURIComponent(stableKey)}`);
   },
 };

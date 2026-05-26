@@ -1,13 +1,22 @@
-import { X, Sparkles, ExternalLink } from "lucide-react";
+import { Trash2, Bookmark, Sparkles, ExternalLink } from "lucide-react";
 import type { ShoppingRecommendation } from "@/types/shopping";
 
 interface RecommendationCardProps {
   recommendation: ShoppingRecommendation;
-  onDismiss: (id: string) => void;
+  // Spotlight cards expose Save + Delete; History cards only expose Delete.
+  variant?: "spotlight" | "saved";
+  onSave?: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
-export function RecommendationCard({ recommendation, onDismiss }: RecommendationCardProps) {
+export function RecommendationCard({
+  recommendation,
+  variant = "spotlight",
+  onSave,
+  onDelete,
+}: RecommendationCardProps) {
   const hasLink = !!recommendation.productUrl;
+  const showSave = variant === "spotlight" && !!onSave;
 
   const body = (
     <>
@@ -36,18 +45,36 @@ export function RecommendationCard({ recommendation, onDismiss }: Recommendation
           </span>
         )}
 
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onDismiss(recommendation.id);
-          }}
-          aria-label="Dismiss"
-          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
+        <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {showSave && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onSave?.(recommendation.id);
+              }}
+              aria-label="Save to history"
+              title="Save — moves to History to make room for new picks"
+              className="w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
+            >
+              <Bookmark className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDelete(recommendation.id);
+            }}
+            aria-label="Delete permanently"
+            title="Delete — never show this item again"
+            className="w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-[hsl(var(--punctuation))]/80"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       <div className="flex items-start justify-between gap-2 mb-1">
