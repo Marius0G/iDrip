@@ -1,22 +1,30 @@
-import { Trash2, Bookmark, Sparkles, ExternalLink } from "lucide-react";
+import type { ReactNode } from "react";
+import { Trash2, Bookmark, EyeOff, Sparkles, ExternalLink, Undo2 } from "lucide-react";
 import type { ShoppingRecommendation } from "@/types/shopping";
 
 interface RecommendationCardProps {
   recommendation: ShoppingRecommendation;
-  // Spotlight cards expose Save + Delete; History cards only expose Delete.
-  variant?: "spotlight" | "saved";
+  // Spotlight: Save + Hide + Delete · Saved: Hide + Delete · Hidden: Restore + Delete-forever
+  variant?: "spotlight" | "saved" | "hidden";
   onSave?: (id: string) => void;
-  onDelete: (id: string) => void;
+  onHide?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onRestore?: (id: string) => void;
 }
 
 export function RecommendationCard({
   recommendation,
   variant = "spotlight",
   onSave,
+  onHide,
   onDelete,
+  onRestore,
 }: RecommendationCardProps) {
   const hasLink = !!recommendation.productUrl;
   const showSave = variant === "spotlight" && !!onSave;
+  const showHide = variant !== "hidden" && !!onHide;
+  const showDelete = !!onDelete;
+  const showRestore = variant === "hidden" && !!onRestore;
 
   const body = (
     <>
@@ -47,33 +55,40 @@ export function RecommendationCard({
 
         <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
           {showSave && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onSave?.(recommendation.id);
-              }}
-              aria-label="Save to history"
-              title="Save — moves to History to make room for new picks"
-              className="w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
-            >
-              <Bookmark className="w-3.5 h-3.5" />
-            </button>
+            <CardAction
+              icon={<Bookmark className="w-3.5 h-3.5" />}
+              label="Save"
+              title="Save — moves to Saved tab to make room for new picks"
+              onClick={() => onSave?.(recommendation.id)}
+            />
           )}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDelete(recommendation.id);
-            }}
-            aria-label="Delete permanently"
-            title="Delete — never show this item again"
-            className="w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-[hsl(var(--punctuation))]/80"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
+          {showHide && (
+            <CardAction
+              icon={<EyeOff className="w-3.5 h-3.5" />}
+              label="Hide"
+              title="Hide for now — goes to Hidden tab, you can restore later"
+              onClick={() => onHide?.(recommendation.id)}
+            />
+          )}
+          {showRestore && (
+            <CardAction
+              icon={<Undo2 className="w-3.5 h-3.5" />}
+              label="Restore"
+              title="Restore — let the AI surface this item again"
+              onClick={() => onRestore?.(recommendation.id)}
+            />
+          )}
+          {showDelete && (
+            <CardAction
+              icon={<Trash2 className="w-3.5 h-3.5" />}
+              label={variant === "hidden" ? "Delete forever" : "Delete"}
+              title={variant === "hidden"
+                ? "Delete forever — removes from Hidden, never shown again"
+                : "Delete — never show this item again"}
+              onClick={() => onDelete?.(recommendation.id)}
+              danger
+            />
+          )}
         </div>
       </div>
 
@@ -110,4 +125,33 @@ export function RecommendationCard({
   }
 
   return <div className={className}>{body}</div>;
+}
+
+interface CardActionProps {
+  icon: ReactNode;
+  label: string;
+  title: string;
+  onClick: () => void;
+  danger?: boolean;
+}
+
+function CardAction({ icon, label, title, onClick, danger }: CardActionProps) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick();
+      }}
+      aria-label={label}
+      title={title}
+      className={
+        "w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center transition-colors " +
+        (danger ? "hover:bg-[hsl(var(--punctuation))]/80" : "hover:bg-black/70")
+      }
+    >
+      {icon}
+    </button>
+  );
 }

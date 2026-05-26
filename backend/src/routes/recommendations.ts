@@ -208,29 +208,75 @@ router.get('/saved', async (req: Request, res: Response) => {
   });
 });
 
-// Permanently dismiss an item. Removes it from saved if present and adds to
-// the dismissed list so future AI generations exclude it.
+// Dismiss an item — `permanent` distinguishes Hide (false, restorable) from
+// Delete (true, gone forever). Both flavors keep the AI filter excluding it.
+// The optional `item` body snapshot lets the Hidden tab render the card
+// without joining back to saved/cache (those rows are removed below).
 router.delete('/item', async (req: Request, res: Response) => {
   const userId = req.userId!;
   const stableKey: string | undefined = req.body?.stableKey || req.query.stableKey as string | undefined;
+  const itemSnapshot = req.body?.item;
+  const permanent = req.body?.permanent === true || req.query.permanent === 'true';
   if (!stableKey) {
     res.status(400).json({ error: 'stableKey is required' });
     return;
   }
+
+  // Best-effort snapshot: prefer the body, fall back to whichever copy we have.
+  let snapshot = itemSnapshot;
+  if (!snapshot) {
+    const fromSaved = await SavedRecommendation.findOne({ userId, stableKey }).lean();
+    snapshot = fromSaved?.item;
+  }
+
   await Promise.all([
     DismissedRecommendation.findOneAndUpdate(
       { userId, stableKey },
-      { userId, stableKey, dismissedAt: new Date() },
+      { userId, stableKey, permanent, ...(snapshot ? { item: snapshot } : {}), dismissedAt: new Date() },
       { upsert: true, new: true }
     ),
     SavedRecommendation.deleteOne({ userId, stableKey }),
-    // Pull any cached spotlight rows that reference this stableKey so a fresh
-    // GET doesn't immediately re-serve it from cache.
     RecommendationCache.updateMany(
       { userId },
       { $pull: { recommendations: { $or: [{ productUrl: stableKey }, { name: stableKey }] } } as never }
     ),
   ]);
+  res.status(204).send();
+});
+
+// Items hidden (soft-dismiss). Excludes permanently-deleted entries — those
+// have no UI surface, they only exist to keep the AI filter aware of them.
+router.get('/hidden', async (req: Request, res: Response) => {
+  const userId = req.userId!;
+  const limit = Math.min(Number(req.query.limit) || 100, 500);
+  const docs = await DismissedRecommendation.find({ userId, permanent: false })
+    .sort({ dismissedAt: -1 })
+    .limit(limit)
+    .lean();
+  const hidden = docs
+    .filter((d) => d.item && d.item.name)
+    .map((d) => ({ ...toFrontendShape(d.item as never), dismissedAt: d.dismissedAt, stableKey: d.stableKey }));
+  res.json({ hidden, count: hidden.length });
+});
+
+// Restore a previously hidden item — removes the dismissed record entirely
+// so future AI generations may surface it again.
+router.post('/hidden/:stableKey/restore', async (req: Request, res: Response) => {
+  const userId = req.userId!;
+  const { stableKey } = req.params;
+  await DismissedRecommendation.deleteOne({ userId, stableKey });
+  res.status(204).send();
+});
+
+// Promote a hidden item to permanently deleted — disappears from the Hidden
+// tab, AI still won't surface it again.
+router.post('/hidden/:stableKey/delete-forever', async (req: Request, res: Response) => {
+  const userId = req.userId!;
+  const { stableKey } = req.params;
+  await DismissedRecommendation.updateOne(
+    { userId, stableKey },
+    { $set: { permanent: true } }
+  );
   res.status(204).send();
 });
 

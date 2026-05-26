@@ -3,13 +3,17 @@ import { persist } from "zustand/middleware";
 import type { ShoppingRecommendation, BudgetSettings, StylePreference } from "@/types/shopping";
 import { shoppingService } from "@/services/shoppingService";
 
+export type HiddenItem = ShoppingRecommendation & { stableKey: string };
+
 interface ShoppingState {
   recommendations: ShoppingRecommendation[];
   saved: ShoppingRecommendation[];
+  hidden: HiddenItem[];
   budget: BudgetSettings;
   selectedStyles: StylePreference[];
   isLoading: boolean;
   isSavedLoading: boolean;
+  isHiddenLoading: boolean;
   error: string | null;
   lastLoadedAt: number | null;
   // Stable keys (productUrl or name) of recs the user has permanently
@@ -18,11 +22,15 @@ interface ShoppingState {
   dismissedKeys: string[];
   loadRecommendations: (force?: boolean) => Promise<void>;
   loadSaved: () => Promise<void>;
+  loadHidden: () => Promise<void>;
   setBudget: (budget: Partial<BudgetSettings>) => void;
   toggleStyle: (style: StylePreference) => void;
   setStyles: (styles: StylePreference[]) => void;
   saveRecommendation: (id: string) => Promise<void>;
+  hideRecommendation: (id: string, source: "spotlight" | "saved") => Promise<void>;
   deleteRecommendation: (id: string, source: "spotlight" | "saved") => Promise<void>;
+  restoreHidden: (stableKey: string) => Promise<void>;
+  deleteHiddenForever: (stableKey: string) => Promise<void>;
   clearDismissed: () => void;
   getFilteredRecommendations: () => ShoppingRecommendation[];
 }
@@ -41,10 +49,12 @@ export const useShoppingStore = create<ShoppingState>()(
     (set, get) => ({
       recommendations: [],
       saved: [],
+      hidden: [],
       budget: { monthlyBudget: 150, spent: 45, currency: "USD" },
       selectedStyles: ["streetwear", "minimalist", "casual"],
       isLoading: false,
       isSavedLoading: false,
+      isHiddenLoading: false,
       error: null,
       lastLoadedAt: null,
       dismissedKeys: [],
@@ -87,6 +97,18 @@ export const useShoppingStore = create<ShoppingState>()(
         } catch (err) {
           console.warn("[shoppingStore] loadSaved failed:", err);
           set({ isSavedLoading: false });
+        }
+      },
+
+      loadHidden: async () => {
+        if (get().isHiddenLoading) return;
+        set({ isHiddenLoading: true });
+        try {
+          const hidden = await shoppingService.getHidden();
+          set({ hidden, isHiddenLoading: false });
+        } catch (err) {
+          console.warn("[shoppingStore] loadHidden failed:", err);
+          set({ isHiddenLoading: false });
         }
       },
 
@@ -138,6 +160,35 @@ export const useShoppingStore = create<ShoppingState>()(
         }
       },
 
+      hideRecommendation: async (id, source) => {
+        const state = get();
+        const rec = source === "spotlight"
+          ? state.recommendations.find((r) => r.id === id)
+          : state.saved.find((r) => r.id === id);
+        if (!rec) return;
+        const key = dismissKey(rec);
+
+        // Optimistic: pull from current view, push to hidden, dismiss key.
+        set({
+          recommendations: state.recommendations.filter((r) => dismissKey(r) !== key),
+          saved: state.saved.filter((r) => dismissKey(r) !== key),
+          hidden: [{ ...rec, stableKey: key }, ...state.hidden.filter((h) => h.stableKey !== key)],
+          dismissedKeys: state.dismissedKeys.includes(key)
+            ? state.dismissedKeys
+            : [...state.dismissedKeys, key],
+        });
+
+        try {
+          await shoppingService.hideItem(key, rec);
+        } catch (err) {
+          console.warn("[shoppingStore] hideItem failed:", err);
+        }
+
+        if (source === "spotlight" && get().recommendations.length < REFILL_THRESHOLD) {
+          void get().loadRecommendations(true);
+        }
+      },
+
       deleteRecommendation: async (id, source) => {
         const state = get();
         const rec = source === "spotlight"
@@ -146,7 +197,7 @@ export const useShoppingStore = create<ShoppingState>()(
         if (!rec) return;
         const key = dismissKey(rec);
 
-        // Optimistic: remove everywhere, add to dismissedKeys.
+        // Permanent: remove from view + saved, NEVER show in hidden.
         set({
           recommendations: state.recommendations.filter((r) => dismissKey(r) !== key),
           saved: state.saved.filter((r) => dismissKey(r) !== key),
@@ -156,18 +207,41 @@ export const useShoppingStore = create<ShoppingState>()(
         });
 
         try {
-          await shoppingService.deleteItem(key);
+          await shoppingService.deleteItem(key, rec);
         } catch (err) {
           console.warn("[shoppingStore] deleteItem failed:", err);
-          // Don't revert — the optimistic delete is mostly fine; user can
-          // refresh to re-sync if the server didn't accept it.
         }
 
-        if (source === "spotlight") {
-          const visible = get().recommendations.length;
-          if (visible < REFILL_THRESHOLD) {
-            void get().loadRecommendations(true);
-          }
+        if (source === "spotlight" && get().recommendations.length < REFILL_THRESHOLD) {
+          void get().loadRecommendations(true);
+        }
+      },
+
+      restoreHidden: async (stableKey) => {
+        const state = get();
+        // Optimistic: remove from hidden + dismissedKeys so it can resurface.
+        set({
+          hidden: state.hidden.filter((h) => h.stableKey !== stableKey),
+          dismissedKeys: state.dismissedKeys.filter((k) => k !== stableKey),
+        });
+        try {
+          await shoppingService.restoreHidden(stableKey);
+        } catch (err) {
+          console.warn("[shoppingStore] restoreHidden failed:", err);
+        }
+      },
+
+      deleteHiddenForever: async (stableKey) => {
+        const state = get();
+        // Optimistic: remove from hidden view; keep the dismiss key so the AI
+        // filter still excludes it.
+        set({
+          hidden: state.hidden.filter((h) => h.stableKey !== stableKey),
+        });
+        try {
+          await shoppingService.deleteHiddenForever(stableKey);
+        } catch (err) {
+          console.warn("[shoppingStore] deleteHiddenForever failed:", err);
         }
       },
 
@@ -191,6 +265,7 @@ export const useShoppingStore = create<ShoppingState>()(
         recommendations: state.recommendations,
         lastLoadedAt: state.lastLoadedAt,
         dismissedKeys: state.dismissedKeys,
+        // hidden + saved are server-truth, refetched on tab open — don't persist
       }) as Partial<ShoppingState>,
     }
   )

@@ -11,6 +11,11 @@ interface SavedResponse {
   count: number;
 }
 
+interface HiddenResponse {
+  hidden: (ShoppingRecommendation & { stableKey: string })[];
+  count: number;
+}
+
 export const shoppingService = {
   async getRecommendations(params: {
     budget?: number;
@@ -40,7 +45,26 @@ export const shoppingService = {
     return res.saved;
   },
 
-  async deleteItem(stableKey: string): Promise<void> {
-    await api.delete<void>(`/recommendations/item?stableKey=${encodeURIComponent(stableKey)}`);
+  async hideItem(stableKey: string, item?: ShoppingRecommendation): Promise<void> {
+    // Soft dismiss — appears in Hidden tab, user can Restore later.
+    await api.delete<void>("/recommendations/item", { stableKey, item, permanent: false });
+  },
+
+  async deleteItem(stableKey: string, item?: ShoppingRecommendation): Promise<void> {
+    // Permanent dismiss — never re-surfaces, not in Hidden tab.
+    await api.delete<void>("/recommendations/item", { stableKey, item, permanent: true });
+  },
+
+  async getHidden(): Promise<(ShoppingRecommendation & { stableKey: string })[]> {
+    const res = await api.get<HiddenResponse>("/recommendations/hidden");
+    return res.hidden;
+  },
+
+  async restoreHidden(stableKey: string): Promise<void> {
+    await api.post<void>(`/recommendations/hidden/${encodeURIComponent(stableKey)}/restore`);
+  },
+
+  async deleteHiddenForever(stableKey: string): Promise<void> {
+    await api.post<void>(`/recommendations/hidden/${encodeURIComponent(stableKey)}/delete-forever`);
   },
 };
