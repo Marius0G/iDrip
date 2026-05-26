@@ -441,7 +441,9 @@ def _finalize_rec(rec_id: str, raw: Dict[str, Any], score: int, reason: str) -> 
         return None
 
     image = (raw.get("image") or "").strip()
-    if not image or image.startswith("https://placehold.co"):
+    parsed_image = urlparse(image) if image else None
+    image_host = (parsed_image.hostname or "").lower() if parsed_image else ""
+    if not image or image_host == "placehold.co" or image_host.endswith(".placehold.co"):
         return None
 
     return {
