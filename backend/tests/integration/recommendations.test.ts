@@ -10,6 +10,8 @@ vi.mock('../../src/services/aiRecommendationService', () => ({
 import { createApp } from '../../src/app';
 import WardrobeItem from '../../src/models/WardrobeItem';
 import RecommendationCache from '../../src/models/RecommendationCache';
+import SavedRecommendation from '../../src/models/SavedRecommendation';
+import DismissedRecommendation from '../../src/models/DismissedRecommendation';
 import { authHeader, createTestUser } from '../helpers';
 
 const SAMPLE_AI_RECS = [
@@ -214,6 +216,108 @@ describe('GET /api/recommendations', () => {
     it('rejects unauthenticated request', async () => {
       const res = await request(app).get('/api/recommendations');
       expect(res.status).toBe(401);
+    });
+  });
+
+  describe('force=1 bypasses cache', () => {
+    beforeEach(() => {
+      process.env.AI_SERVICE_URL = 'http://test-ai:8000';
+    });
+
+    it('regenerates fresh recs even when a cached row exists', async () => {
+      const user = await createTestUser();
+      await WardrobeItem.create({ userId: user._id, name: 'tops', category: 'tops' });
+      aiMock.mockResolvedValue(SAMPLE_AI_RECS);
+
+      const first = await request(app).get('/api/recommendations').set(authHeader(user));
+      expect(first.body.cached).toBe(false);
+
+      const second = await request(app).get('/api/recommendations?force=1').set(authHeader(user));
+      expect(second.body.cached).toBe(false); // not served from cache
+      expect(aiMock).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('save/delete history actions', () => {
+    beforeEach(() => {
+      process.env.AI_SERVICE_URL = 'http://test-ai:8000';
+    });
+
+    it('POST /save stores the item under the user', async () => {
+      const user = await createTestUser();
+      const item = SAMPLE_AI_RECS[0];
+
+      const res = await request(app).post('/api/recommendations/save').set(authHeader(user)).send({ item });
+      expect(res.status).toBe(201);
+      expect(res.body.saved.stableKey).toBe(item.productUrl);
+
+      const found = await SavedRecommendation.findOne({ userId: user._id });
+      expect(found?.item.name).toBe(item.name);
+    });
+
+    it('POST /save is idempotent — saving the same item twice yields one row', async () => {
+      const user = await createTestUser();
+      const item = SAMPLE_AI_RECS[0];
+      await request(app).post('/api/recommendations/save').set(authHeader(user)).send({ item });
+      await request(app).post('/api/recommendations/save').set(authHeader(user)).send({ item });
+
+      const count = await SavedRecommendation.countDocuments({ userId: user._id });
+      expect(count).toBe(1);
+    });
+
+    it('GET /saved returns saved items most-recent-first', async () => {
+      const user = await createTestUser();
+      await request(app).post('/api/recommendations/save').set(authHeader(user))
+        .send({ item: { ...SAMPLE_AI_RECS[0], productUrl: 'https://a.com/x' } });
+      await request(app).post('/api/recommendations/save').set(authHeader(user))
+        .send({ item: { ...SAMPLE_AI_RECS[0], productUrl: 'https://b.com/y', name: 'Second' } });
+
+      const res = await request(app).get('/api/recommendations/saved').set(authHeader(user));
+      expect(res.status).toBe(200);
+      expect(res.body.count).toBe(2);
+      expect(res.body.saved[0].name).toBe('Second'); // most recent first
+    });
+
+    it('DELETE /item adds to dismissed and removes from saved', async () => {
+      const user = await createTestUser();
+      const item = SAMPLE_AI_RECS[0];
+      await request(app).post('/api/recommendations/save').set(authHeader(user)).send({ item });
+
+      const res = await request(app).delete('/api/recommendations/item')
+        .set(authHeader(user))
+        .send({ stableKey: item.productUrl });
+      expect(res.status).toBe(204);
+
+      expect(await SavedRecommendation.countDocuments({ userId: user._id })).toBe(0);
+      const dismissed = await DismissedRecommendation.findOne({ userId: user._id, stableKey: item.productUrl });
+      expect(dismissed).toBeTruthy();
+    });
+
+    it('dismissed items are filtered out of subsequent /recommendations responses', async () => {
+      const user = await createTestUser();
+      await WardrobeItem.create({ userId: user._id, name: 'tops', category: 'tops' });
+
+      // Dismiss the item the AI is about to return.
+      await DismissedRecommendation.create({ userId: user._id, stableKey: SAMPLE_AI_RECS[0].productUrl });
+      aiMock.mockResolvedValueOnce(SAMPLE_AI_RECS);
+
+      const res = await request(app).get('/api/recommendations').set(authHeader(user));
+      expect(res.status).toBe(200);
+      expect(res.body.recommendations).toHaveLength(0); // filtered out
+    });
+
+    it('DELETE /cache clears all rows for the user', async () => {
+      const user = await createTestUser();
+      await RecommendationCache.create({
+        userId: user._id,
+        cacheKey: 'k1',
+        recommendations: SAMPLE_AI_RECS,
+        expiresAt: new Date(Date.now() + 1000),
+      });
+      const res = await request(app).delete('/api/recommendations/cache').set(authHeader(user));
+      expect(res.status).toBe(200);
+      expect(res.body.deleted).toBeGreaterThan(0);
+      expect(await RecommendationCache.countDocuments({ userId: user._id })).toBe(0);
     });
   });
 
