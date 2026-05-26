@@ -118,6 +118,48 @@ class TestSerpApiShopping:
         brands = sorted(r["brand"] for r in results)
         assert brands == ["Nike", "Uniqlo"]
 
+    def test_google_shopping_redirect_uses_source_for_label(self, monkeypatch):
+        """SerpAPI google_shopping often returns google.com redirect URLs with
+        the real retailer in the `source` field. We trust source ONLY when the
+        URL host is google.com — anything else risks whitelist bypass."""
+        import recommend_purchases as rp
+        monkeypatch.setattr(rp, "SERPAPI_KEY", "fake-key")
+
+        fake_response = MagicMock()
+        fake_response.json.return_value = {
+            "shopping_results": [
+                # Google redirect with whitelisted source → accept as Nike
+                {"title": "Nike Tech Fleece", "source": "Nike",
+                 "product_link": "https://www.google.com/search?ibp=oshop&q=nike",
+                 "thumbnail": "https://encrypted-tbn1.gstatic.com/x",
+                 "extracted_price": 60},
+                # Google redirect with non-whitelisted source → reject
+                {"title": "Dick's Sneakers", "source": "DICK'S Sporting Goods",
+                 "product_link": "https://www.google.com/search?ibp=oshop&q=x",
+                 "thumbnail": "https://encrypted-tbn1.gstatic.com/x",
+                 "extracted_price": 80},
+                # Non-google URL with spoofed source → must use URL whitelist (reject)
+                {"title": "Spoofed Nike", "source": "Nike",
+                 "product_link": "https://shein.com/junk",
+                 "thumbnail": "https://shein-img.com/x",
+                 "extracted_price": 12},
+            ]
+        }
+        fake_response.raise_for_status = MagicMock()
+
+        with patch("httpx.Client") as mock_client_cls:
+            mock_client = MagicMock()
+            mock_client.__enter__ = MagicMock(return_value=mock_client)
+            mock_client.__exit__ = MagicMock(return_value=False)
+            mock_client.get.return_value = fake_response
+            mock_client_cls.return_value = mock_client
+
+            results = rp._serpapi_shopping("query", 100)
+
+        assert len(results) == 1
+        assert results[0]["brand"] == "Nike"
+        assert results[0]["title"] == "Nike Tech Fleece"
+
     def test_swallows_network_errors(self, monkeypatch):
         import recommend_purchases as rp
         monkeypatch.setattr(rp, "SERPAPI_KEY", "fake-key")
@@ -230,6 +272,20 @@ class TestFinalizeRec:
             "r3",
             {"title": "Zara Knit", "brand": "Zara", "target_category": "tops", "price": 80,
              "url": "https://zara.com/x", "image": "https://static.zara.net/y.jpg"},
+            85, "fits"
+        )
+        assert rec is not None
+
+    def test_gstatic_image_proxy_passes_regardless_of_brand(self):
+        """SerpAPI serves many shopping thumbnails via Google's image proxy
+        (encrypted-tbn*.gstatic.com). Google picks the image, so we trust it
+        without enforcing the brand-CDN check."""
+        import recommend_purchases as rp
+        rec = rp._finalize_rec(
+            "r1",
+            {"title": "Nike Pants", "brand": "Nike", "target_category": "bottoms", "price": 60,
+             "url": "https://www.google.com/search?ibp=oshop&q=nike",
+             "image": "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd"},
             85, "fits"
         )
         assert rec is not None
