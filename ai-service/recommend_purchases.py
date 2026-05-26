@@ -80,6 +80,11 @@ def _image_matches_brand(image_url: str, brand: str) -> bool:
     if not hosts:
         return True  # marketplace — accept any seller-uploaded image
     host = (urlparse(image_url).hostname or "").lower()
+    # SerpAPI google_shopping often serves thumbnails through Google's image
+    # proxy (encrypted-tbn*.gstatic.com) rather than the retailer's own CDN.
+    # Google picks the image, so we trust it as much as the brand's CDN.
+    if host.endswith("gstatic.com"):
+        return True
     return any(h in host for h in hosts)
 
 MAX_QUERIES = 4
@@ -273,9 +278,22 @@ def _serpapi_shopping(query: str, max_price: float) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
     for r in (data.get("shopping_results") or []):
         link = r.get("product_link") or r.get("link") or ""
-        # Only the URL host is trusted. The 'source' field is attacker-controlled
-        # display text — using it would defeat the whitelist.
         label = _domain_in_whitelist(link)
+
+        # SerpAPI's google_shopping engine often returns Google Shopping
+        # redirect URLs (host=google.com) instead of direct retailer URLs. In
+        # that case the URL is Google-controlled, so we can trust the `source`
+        # field as the retailer label. Outside of google.com URLs the source
+        # is untrusted display text — using it then would defeat the whitelist.
+        if not label:
+            link_host = (urlparse(link).hostname or "").lower()
+            if link_host == "google.com" or link_host == "www.google.com":
+                src = (r.get("source") or "").strip().lower()
+                for allowed_label in RETAILER_WHITELIST.values():
+                    if src == allowed_label.lower():
+                        label = allowed_label
+                        break
+
         if not label:
             continue
 
