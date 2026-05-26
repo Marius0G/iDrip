@@ -32,7 +32,7 @@ test.describe('Shopping page', () => {
     });
     await page.goto('/shopping');
 
-    await expect(page.getByText(/no recommendations/i)).toBeVisible();
+    await expect(page.getByText(/hidden by your budget/i)).toBeVisible();
   });
 
   test('page is reachable from a fresh authenticated session', async ({ page }) => {
