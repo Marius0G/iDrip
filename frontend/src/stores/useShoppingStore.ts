@@ -10,16 +10,26 @@ interface ShoppingState {
   isLoading: boolean;
   error: string | null;
   lastLoadedAt: number | null;
+  // Stable keys (productUrl or name) of recs the user has dismissed. Survives
+  // page reloads and fresh AI generations so a rejected product stays gone.
+  dismissedKeys: string[];
   loadRecommendations: (force?: boolean) => Promise<void>;
   setBudget: (budget: Partial<BudgetSettings>) => void;
   toggleStyle: (style: StylePreference) => void;
   setStyles: (styles: StylePreference[]) => void;
   dismissRecommendation: (id: string) => void;
+  clearDismissed: () => void;
   getFilteredRecommendations: () => ShoppingRecommendation[];
 }
 
 // Reload from API if recs are missing or older than 30 min.
 const STALE_AFTER_MS = 30 * 60 * 1000;
+
+// Identity that survives re-generation: the LLM-assigned `id` rotates on every
+// AI run, but productUrl/name are stable for the same product.
+function dismissKey(rec: ShoppingRecommendation): string {
+  return rec.productUrl || rec.name;
+}
 
 export const useShoppingStore = create<ShoppingState>()(
   persist(
@@ -30,6 +40,7 @@ export const useShoppingStore = create<ShoppingState>()(
       isLoading: false,
       error: null,
       lastLoadedAt: null,
+      dismissedKeys: [],
 
       loadRecommendations: async (force = false) => {
         const { recommendations, lastLoadedAt, isLoading, budget, selectedStyles } = get();
@@ -68,15 +79,25 @@ export const useShoppingStore = create<ShoppingState>()(
       setStyles: (styles) => set({ selectedStyles: styles }),
 
       dismissRecommendation: (id) => {
-        set((state) => ({
-          recommendations: state.recommendations.filter((r) => r.id !== id),
-        }));
+        set((state) => {
+          const rec = state.recommendations.find((r) => r.id === id);
+          if (!rec) return state;
+          const key = dismissKey(rec);
+          // Avoid duplicates if the user dismisses the same product twice
+          // across separate AI generations.
+          if (state.dismissedKeys.includes(key)) return state;
+          return { dismissedKeys: [...state.dismissedKeys, key] };
+        });
       },
 
+      clearDismissed: () => set({ dismissedKeys: [] }),
+
       getFilteredRecommendations: () => {
-        const { recommendations, budget } = get();
+        const { recommendations, budget, dismissedKeys } = get();
         const remaining = budget.monthlyBudget - budget.spent;
+        const dismissed = new Set(dismissedKeys);
         return recommendations
+          .filter((r) => !dismissed.has(dismissKey(r)))
           .filter((r) => r.estimatedPrice <= remaining)
           .sort((a, b) => b.matchScore - a.matchScore);
       },
@@ -89,6 +110,7 @@ export const useShoppingStore = create<ShoppingState>()(
         selectedStyles: state.selectedStyles,
         recommendations: state.recommendations,
         lastLoadedAt: state.lastLoadedAt,
+        dismissedKeys: state.dismissedKeys,
       }) as Partial<ShoppingState>,
     }
   )
