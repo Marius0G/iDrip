@@ -83,9 +83,9 @@ def _image_matches_brand(image_url: str, brand: str) -> bool:
     # SerpAPI google_shopping often serves thumbnails through Google's image
     # proxy (encrypted-tbn*.gstatic.com) rather than the retailer's own CDN.
     # Google picks the image, so we trust it as much as the brand's CDN.
-    if host.endswith("gstatic.com"):
+    if host == "gstatic.com" or host.endswith(".gstatic.com"):
         return True
-    return any(h in host for h in hosts)
+    return any(host == h or host.endswith(f".{h}") for h in hosts)
 
 MAX_QUERIES = 4
 RESULTS_PER_QUERY = 20
