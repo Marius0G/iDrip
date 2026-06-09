@@ -15,7 +15,7 @@ jobs:
     name: Deploy backend
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Heroku CLI
         run: curl https://cli-assets.heroku.com/install.sh | sh
